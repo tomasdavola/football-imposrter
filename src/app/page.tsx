@@ -1,65 +1,125 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden relative">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-emerald-500/5 rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-emerald-500/5 rounded-full" />
+        
+        {/* Football pattern */}
+        {mounted && (
+          <>
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute text-4xl opacity-5 animate-float"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  top: `${10 + (i % 3) * 30}%`,
+                  animationDelay: `${i * 0.5}s`,
+                }}
+              >
+                ⚽
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Main content */}
+      <div className={`relative z-10 text-center space-y-8 max-w-lg transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        {/* Logo/Icon */}
+        <div className="relative inline-block">
+          <div className="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-600 flex items-center justify-center shadow-2xl shadow-emerald-500/30 animate-pulse-slow">
+            <span className="text-7xl">⚽</span>
+          </div>
+          <div className="absolute -bottom-2 -right-2 w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/30 border-4 border-zinc-950">
+            <span className="text-2xl">🕵️</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="space-y-3">
+          <h1 className="text-5xl md:text-6xl font-black tracking-tight">
+            <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-500 bg-clip-text text-transparent">
+              Football
+            </span>
+            <br />
+            <span className="text-white">Imposter</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-zinc-400 text-lg md:text-xl max-w-md mx-auto">
+            One player is faking it. Can you find them before they blend in?
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Game modes */}
+        <div className="space-y-4 pt-4">
+          <Link
+            href="/game"
+            className="block w-full py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-black font-bold text-xl rounded-2xl hover:from-emerald-400 hover:to-green-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-emerald-500/25"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            🎮 Start Game
+          </Link>
+          
+          <p className="text-zinc-600 text-sm">
+            Pass-the-phone mode • 3-10 players
+          </p>
         </div>
-      </main>
+
+        {/* How to play hint */}
+        <div className="pt-4">
+          <details className="group">
+            <summary className="cursor-pointer text-zinc-500 hover:text-zinc-400 transition-colors flex items-center justify-center gap-2">
+              <span>📖 How to Play</span>
+              <span className="group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div className="mt-4 p-4 bg-zinc-900/50 rounded-xl border border-zinc-800 text-left space-y-3 animate-fade-in">
+              <div className="flex gap-3">
+                <span className="text-2xl">1️⃣</span>
+                <p className="text-zinc-400 text-sm">
+                  <strong className="text-white">Setup:</strong> Enter player names. One random player becomes the Imposter.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-2xl">2️⃣</span>
+                <p className="text-zinc-400 text-sm">
+                  <strong className="text-white">Reveal:</strong> Pass the phone. Each player sees if they&apos;re the Imposter or the secret football player.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-2xl">3️⃣</span>
+                <p className="text-zinc-400 text-sm">
+                  <strong className="text-white">Discuss:</strong> Ask questions about the player. The Imposter must fake their knowledge!
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-2xl">4️⃣</span>
+                <p className="text-zinc-400 text-sm">
+                  <strong className="text-white">Vote:</strong> Vote out the suspected Imposter. Crew wins if they catch them!
+                </p>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className={`absolute bottom-6 text-zinc-600 text-sm transition-all duration-1000 delay-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
+        Made for football fans 🌟
+      </div>
     </div>
   );
 }
