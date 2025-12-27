@@ -11,32 +11,33 @@ export interface FootballPlayer {
 export interface PlayerSourceSelection {
   currentStars: boolean;
   legends: boolean;
-  clubs: string[]; // Selected club names
+  clubs: string[]; // Selected club IDs (from CLUBS array)
 }
 
-// Club info with badge URLs from TheSportsDB
+// Club info with badge URLs and TheSportsDB team IDs (source of truth)
 export interface ClubInfo {
-  name: string;
-  shortName: string;
-  badge: string;
+  id: string;        // TheSportsDB team ID - source of truth
+  name: string;      // Display name
+  shortName: string; // Short display name
+  badge: string;     // Badge image URL
 }
 
 export const CLUBS: ClubInfo[] = [
-  { name: "Manchester City", shortName: "Man City", badge: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png" },
-  { name: "Real Madrid", shortName: "Real Madrid", badge: "https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png" },
-  { name: "Barcelona", shortName: "Barcelona", badge: "https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png" },
-  { name: "Bayern Munich", shortName: "Bayern", badge: "https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png" },
-  { name: "Liverpool", shortName: "Liverpool", badge: "https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png" },
-  { name: "Arsenal", shortName: "Arsenal", badge: "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png" },
-  { name: "Chelsea", shortName: "Chelsea", badge: "https://r2.thesportsdb.com/images/media/team/badge/yvwvtu1448813215.png" },
-  { name: "Manchester United", shortName: "Man Utd", badge: "https://r2.thesportsdb.com/images/media/team/badge/xzqdr11517660252.png" },
-  { name: "Paris Saint-Germain", shortName: "PSG", badge: "https://r2.thesportsdb.com/images/media/team/badge/rwqrrq1473504808.png" },
-  { name: "Juventus", shortName: "Juventus", badge: "https://r2.thesportsdb.com/images/media/team/badge/uxf0gr1742983727.png" },
-  { name: "Inter Milan", shortName: "Inter", badge: "https://r2.thesportsdb.com/images/media/team/badge/ryhu6d1617113103.png" },
-  { name: "AC Milan", shortName: "AC Milan", badge: "https://r2.thesportsdb.com/images/media/team/badge/wvspur1448806617.png" },
-  { name: "Borussia Dortmund", shortName: "Dortmund", badge: "https://r2.thesportsdb.com/images/media/team/badge/tqo8ge1716960353.png" },
-  { name: "Atletico Madrid", shortName: "Atletico", badge: "https://r2.thesportsdb.com/images/media/team/badge/0ulh3q1719984315.png" },
-  { name: "Tottenham", shortName: "Spurs", badge: "https://r2.thesportsdb.com/images/media/team/badge/dfyfhl1604094109.png" },
+  { id: "133613", name: "Manchester City", shortName: "Man City", badge: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png" },
+  { id: "133738", name: "Real Madrid", shortName: "Real Madrid", badge: "https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png" },
+  { id: "133739", name: "Barcelona", shortName: "Barcelona", badge: "https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png" },
+  { id: "133632", name: "Bayern Munich", shortName: "Bayern", badge: "https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png" },
+  { id: "133602", name: "Liverpool", shortName: "Liverpool", badge: "https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png" },
+  { id: "133604", name: "Arsenal", shortName: "Arsenal", badge: "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png" },
+  { id: "133610", name: "Chelsea", shortName: "Chelsea", badge: "https://r2.thesportsdb.com/images/media/team/badge/yvwvtu1448813215.png" },
+  { id: "133612", name: "Manchester United", shortName: "Man Utd", badge: "https://r2.thesportsdb.com/images/media/team/badge/xzqdr11517660252.png" },
+  { id: "133714", name: "Paris Saint-Germain", shortName: "PSG", badge: "https://r2.thesportsdb.com/images/media/team/badge/rwqrrq1473504808.png" },
+  { id: "133676", name: "Juventus", shortName: "Juventus", badge: "https://r2.thesportsdb.com/images/media/team/badge/uxf0gr1742983727.png" },
+  { id: "133670", name: "Inter Milan", shortName: "Inter", badge: "https://r2.thesportsdb.com/images/media/team/badge/ryhu6d1617113103.png" },
+  { id: "133671", name: "AC Milan", shortName: "AC Milan", badge: "https://r2.thesportsdb.com/images/media/team/badge/wvspur1448806617.png" },
+  { id: "133636", name: "Borussia Dortmund", shortName: "Dortmund", badge: "https://r2.thesportsdb.com/images/media/team/badge/tqo8ge1716960353.png" },
+  { id: "133703", name: "Atletico Madrid", shortName: "Atletico", badge: "https://r2.thesportsdb.com/images/media/team/badge/0ulh3q1719984315.png" },
+  { id: "133616", name: "Tottenham", shortName: "Spurs", badge: "https://r2.thesportsdb.com/images/media/team/badge/dfyfhl1604094109.png" },
 ];
 
 // Helper to get default selection (all stars selected)
@@ -153,17 +154,13 @@ interface ApiPlayerResponse {
  */
 export async function getPlayersFromAPI(count: number = 1): Promise<FootballPlayer[]> {
   try {
-    const response = await fetch(`/api/players/random?count=${count}`);
+    const response = await fetch(`/api/players?count=${count}`);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     
     const data: ApiPlayerResponse = await response.json();
-    
-    if (count === 1 && data.player) {
-      return [data.player];
-    }
     
     if (data.players && data.players.length > 0) {
       return data.players;
@@ -178,11 +175,11 @@ export async function getPlayersFromAPI(count: number = 1): Promise<FootballPlay
 }
 
 /**
- * Fetches players from a specific club
+ * Fetches players from a specific club by team ID
  */
-export async function getPlayersFromClub(clubName: string, count: number = 1): Promise<FootballPlayer[]> {
+export async function getPlayersFromClub(teamId: string, count: number = 1): Promise<FootballPlayer[]> {
   try {
-    const response = await fetch(`/api/players?team=${encodeURIComponent(clubName)}&count=${count}`);
+    const response = await fetch(`/api/players?teamId=${teamId}&count=${count}`);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -198,7 +195,7 @@ export async function getPlayersFromClub(clubName: string, count: number = 1): P
     
     throw new Error("No players returned from API");
   } catch (error) {
-    console.error(`Failed to fetch from club ${clubName}:`, error);
+    console.error(`Failed to fetch from team ${teamId}:`, error);
     return getRandomPlayersFromList(allPremadePlayers, count);
   }
 }
@@ -223,14 +220,14 @@ export async function getPlayersFromSelection(
     allPlayers.push(...legendsPlayers);
   }
   
-  // Fetch from selected clubs
+  // Fetch from selected clubs (by team ID)
   if (selection.clubs.length > 0) {
-    for (const club of selection.clubs) {
+    for (const teamId of selection.clubs) {
       try {
-        const clubPlayers = await getPlayersFromClub(club, 30);
+        const clubPlayers = await getPlayersFromClub(teamId, 30);
         allPlayers.push(...clubPlayers);
       } catch (error) {
-        console.error(`Failed to fetch from ${club}:`, error);
+        console.error(`Failed to fetch from team ${teamId}:`, error);
       }
     }
   }

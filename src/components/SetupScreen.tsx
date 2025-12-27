@@ -77,11 +77,11 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
     });
   };
 
-  const toggleClub = (clubName: string) => {
+  const toggleClub = (clubId: string) => {
     setSelectedClubs(prev => 
-      prev.includes(clubName) 
-        ? prev.filter(c => c !== clubName)
-        : [...prev, clubName]
+      prev.includes(clubId) 
+        ? prev.filter(c => c !== clubId)
+        : [...prev, clubId]
     );
   };
 
@@ -388,7 +388,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
                   if (selectedClubs.length === CLUBS.length) {
                     setSelectedClubs([]);
                   } else {
-                    setSelectedClubs(CLUBS.map(c => c.name));
+                    setSelectedClubs(CLUBS.map(c => c.id));
                   }
                 }}
                 className="text-xs text-emerald-400 hover:text-emerald-300"
@@ -399,10 +399,10 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
             <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto p-1">
               {CLUBS.map((club) => (
                 <button
-                  key={club.name}
-                  onClick={() => toggleClub(club.name)}
+                  key={club.id}
+                  onClick={() => toggleClub(club.id)}
                   className={`p-2 rounded-lg transition-all flex flex-col items-center gap-1.5 ${
-                    selectedClubs.includes(club.name)
+                    selectedClubs.includes(club.id)
                       ? "bg-emerald-500/20 border-2 border-emerald-500/50 scale-105"
                       : "bg-zinc-800 border-2 border-zinc-700 hover:border-zinc-600 hover:bg-zinc-700/50"
                   }`}
@@ -417,7 +417,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
                     />
                   </div>
                   <div className={`text-xs font-medium truncate w-full text-center ${
-                    selectedClubs.includes(club.name) ? "text-emerald-400" : "text-zinc-400"
+                    selectedClubs.includes(club.id) ? "text-emerald-400" : "text-zinc-400"
                   }`}>
                     {club.shortName}
                   </div>

@@ -36,40 +36,23 @@ interface TheSportsDBTeam {
 
 // Top teams to fetch players from (team IDs from TheSportsDB)
 // These are stable IDs that won't change - the players within them update automatically
+// The frontend (players.ts) maintains the full name/id mapping
 const TOP_TEAM_IDS = [
-  "133604", // Manchester City
+  "133613", // Manchester City
   "133738", // Real Madrid
   "133739", // Barcelona  
   "133632", // Bayern Munich
   "133602", // Liverpool
-  "133604", // Arsenal (using different lookup)
-  "133613", // Chelsea
-  // "133603", // Manchester United
+  "133604", // Arsenal
+  "133610", // Chelsea
+  "133612", // Manchester United
   "133714", // Paris Saint-Germain
   "133676", // Juventus
-  // "133670", // Inter Milan
-  // "133671", // AC Milan
-  // "133636", // Borussia Dortmund
-  // "133703", // Atletico Madrid
-];
-
-// Fallback: Top team names to search (in case IDs change)
-const TOP_TEAM_NAMES = [
-  "Manchester City",
-  "Real Madrid",
-  "Barcelona",
-  "Bayern Munich", 
-  "Liverpool",
-  "Arsenal",
-  "Chelsea",
-  "Manchester United",
-  "Paris Saint-Germain",
-  "Juventus",
-  "Inter Milan",
-  "AC Milan",
-  "Borussia Dortmund",
-  "Atletico Madrid",
-  "Tottenham",
+  "133670", // Inter Milan
+  "133671", // AC Milan
+  "133636", // Borussia Dortmund
+  "133703", // Atletico Madrid
+  "133616", // Tottenham
 ];
 
 // Cache for players fetched from teams
@@ -122,28 +105,14 @@ async function searchPlayer(playerName: string): Promise<ExternalPlayer | null> 
   }
 }
 
-async function getTeamPlayers(teamName: string): Promise<ExternalPlayer[]> {
+/**
+ * Get players by team ID directly (source of truth)
+ */
+async function getTeamPlayersById(teamId: string): Promise<ExternalPlayer[]> {
   try {
-    // First, search for the team
-    const teamResponse = await fetch(
-      `${THESPORTSDB_BASE_URL}/searchteams.php?t=${encodeURIComponent(teamName)}`,
-      { next: { revalidate: 3600 } }
-    );
-
-    if (!teamResponse.ok) {
-      return [];
-    }
-
-    const teamData = await teamResponse.json();
-    if (!teamData.teams || teamData.teams.length === 0) {
-      return [];
-    }
-
-    const team = teamData.teams[0] as TheSportsDBTeam;
-
-    // Then get all players for that team
+    // Get all players for the team by ID directly
     const playersResponse = await fetch(
-      `${THESPORTSDB_BASE_URL}/lookup_all_players.php?id=${team.idTeam}`,
+      `${THESPORTSDB_BASE_URL}/lookup_all_players.php?id=${teamId}`,
       { next: { revalidate: 3600 } }
     );
 
@@ -156,24 +125,44 @@ async function getTeamPlayers(teamName: string): Promise<ExternalPlayer[]> {
       return [];
     }
 
+    // Get team info for badge (optional, for enrichment)
+    let teamName = "Unknown";
+    let teamBadge: string | null = null;
+    
+    try {
+      const teamResponse = await fetch(
+        `${THESPORTSDB_BASE_URL}/lookupteam.php?id=${teamId}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (teamResponse.ok) {
+        const teamData = await teamResponse.json();
+        if (teamData.teams && teamData.teams[0]) {
+          teamName = teamData.teams[0].strTeam;
+          teamBadge = teamData.teams[0].strBadge;
+        }
+      }
+    } catch {
+      // Team info is optional, continue without it
+    }
+
     return playersData.player.map((p: TheSportsDBPlayer): ExternalPlayer => ({
       id: p.idPlayer,
       name: p.strPlayer,
       photo: p.strCutout || p.strThumb || null,
       nationality: p.strNationality || "Unknown",
       position: p.strPosition || "Unknown",
-      team: team.strTeam,
-      teamBadge: team.strBadge,
+      team: p.strTeam || teamName,
+      teamBadge: teamBadge,
       nationalityFlag: null,
       dateOfBirth: p.dateBorn,
     }));
   } catch (error) {
-    console.error(`Error fetching team ${teamName}:`, error);
+    console.error(`Error fetching team ${teamId}:`, error);
     return [];
   }
 }
 
-// Fetch players from all top teams dynamically
+// Fetch players from all top teams dynamically using team IDs
 async function fetchTopPlayers(): Promise<ExternalPlayer[]> {
   // Check cache first
   if (cachedPlayers.length > 0 && Date.now() - cacheTimestamp < CACHE_DURATION) {
@@ -182,8 +171,8 @@ async function fetchTopPlayers(): Promise<ExternalPlayer[]> {
 
   console.log("Fetching fresh player data from top teams...");
   
-  // Fetch players from each top team in parallel
-  const teamPromises = TOP_TEAM_NAMES.map(teamName => getTeamPlayers(teamName));
+  // Fetch players from each top team in parallel using team IDs
+  const teamPromises = TOP_TEAM_IDS.map(teamId => getTeamPlayersById(teamId));
   const results = await Promise.all(teamPromises);
   
   // Flatten and deduplicate players by ID
@@ -201,7 +190,7 @@ async function fetchTopPlayers(): Promise<ExternalPlayer[]> {
   cachedPlayers = Array.from(uniquePlayers.values());
   cacheTimestamp = Date.now();
   
-  console.log(`Cached ${cachedPlayers.length} players from ${TOP_TEAM_NAMES.length} teams`);
+  console.log(`Cached ${cachedPlayers.length} players from ${TOP_TEAM_IDS.length} teams`);
   
   return cachedPlayers;
 }
@@ -209,13 +198,13 @@ async function fetchTopPlayers(): Promise<ExternalPlayer[]> {
 // GET /api/players - Get list of players
 // Query params:
 //   - search: Search for a specific player by name
-//   - team: Get all players from a specific team
+//   - teamId: Get all players from a team by ID (preferred, source of truth)
 //   - count: Number of players to return (default: 10)
 //   - all: If true, return all cached players
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
-  const team = searchParams.get("team");
+  const teamId = searchParams.get("teamId");
   const all = searchParams.get("all") === "true";
   const count = parseInt(searchParams.get("count") || "10", 10);
 
@@ -229,9 +218,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ players: [], message: "Player not found" });
     }
 
-    // Get players from a specific team
-    if (team) {
-      const players = await getTeamPlayers(team);
+    // Get players from a specific team by ID
+    if (teamId) {
+      const players = await getTeamPlayersById(teamId);
       return NextResponse.json({ 
         players: players.slice(0, count),
         total: players.length 
@@ -247,7 +236,7 @@ export async function GET(request: Request) {
         players: allPlayers,
         total: allPlayers.length,
         cached: cacheTimestamp > 0,
-        teamsUsed: TOP_TEAM_NAMES,
+        teamsUsed: TOP_TEAM_IDS,
       });
     }
     
