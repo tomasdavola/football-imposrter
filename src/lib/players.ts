@@ -175,11 +175,15 @@ export async function getPlayersFromAPI(count: number = 1): Promise<FootballPlay
 }
 
 /**
- * Fetches players from a specific club by team ID
+ * Fetches players from multiple clubs by team IDs (single API call)
  */
-export async function getPlayersFromClub(teamId: string, count: number = 1): Promise<FootballPlayer[]> {
+export async function getPlayersFromClubs(teamIds: string[], count: number = 100): Promise<FootballPlayer[]> {
+  if (teamIds.length === 0) {
+    return [];
+  }
+  
   try {
-    const response = await fetch(`/api/players?teamId=${teamId}&count=${count}`);
+    const response = await fetch(`/api/players?teamIds=${teamIds.join(",")}&count=${count}`);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -188,14 +192,12 @@ export async function getPlayersFromClub(teamId: string, count: number = 1): Pro
     const data: ApiPlayerResponse = await response.json();
     
     if (data.players && data.players.length > 0) {
-      // Shuffle and return requested count
-      const shuffled = [...data.players].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, count);
+      return data.players;
     }
     
     throw new Error("No players returned from API");
   } catch (error) {
-    console.error(`Failed to fetch from team ${teamId}:`, error);
+    console.error(`Failed to fetch from teams ${teamIds.join(",")}:`, error);
     return getRandomPlayersFromList(allPremadePlayers, count);
   }
 }
@@ -220,15 +222,13 @@ export async function getPlayersFromSelection(
     allPlayers.push(...legendsPlayers);
   }
   
-  // Fetch from selected clubs (by team ID)
+  // Fetch from selected clubs (single API call with all team IDs)
   if (selection.clubs.length > 0) {
-    for (const teamId of selection.clubs) {
-      try {
-        const clubPlayers = await getPlayersFromClub(teamId, 30);
-        allPlayers.push(...clubPlayers);
-      } catch (error) {
-        console.error(`Failed to fetch from team ${teamId}:`, error);
-      }
+    try {
+      const clubPlayers = await getPlayersFromClubs(selection.clubs, 500);
+      allPlayers.push(...clubPlayers);
+    } catch (error) {
+      console.error("Failed to fetch from clubs:", error);
     }
   }
   
