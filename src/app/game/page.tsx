@@ -3,25 +3,21 @@
 import { useState, useCallback, useRef } from "react";
 import { GameState, GamePhase, GameOptions, createInitialGameState, setupGame } from "@/lib/gameState";
 import { getRandomPlayer, getRandomPlayers, FootballPlayer } from "@/lib/players";
-import SetupScreen from "@/components/SetupScreen";
+import SetupScreen, { SavedSettings } from "@/components/SetupScreen";
 import PassPhoneScreen from "@/components/PassPhoneScreen";
 import RevealScreen from "@/components/RevealScreen";
 import DiscussionScreen from "@/components/DiscussionScreen";
 import VotingScreen from "@/components/VotingScreen";
 import ResultsScreen from "@/components/ResultsScreen";
 
-interface LastGameSettings {
-  playerNames: string[];
-  discussionTime: number;
-  options: GameOptions;
-}
+// Using SavedSettings from SetupScreen for type consistency
 
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
   const [showReveal, setShowReveal] = useState(false);
   const [currentVoterIndex, setCurrentVoterIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const lastSettingsRef = useRef<LastGameSettings | null>(null);
+  const lastSettingsRef = useRef<SavedSettings | null>(null);
 
   const handleStartGame = useCallback(async (playerNames: string[], discussionTime: number, options: GameOptions) => {
     // Save settings for "Play Again"
@@ -162,7 +158,7 @@ export default function GamePage() {
   // Render based on game phase
   switch (gameState.phase) {
     case "setup":
-      return <SetupScreen onStartGame={handleStartGame} />;
+      return <SetupScreen onStartGame={handleStartGame} initialSettings={lastSettingsRef.current} />;
 
     case "passing":
       const currentPlayer = gameState.players[gameState.currentPlayerIndex];
@@ -174,6 +170,7 @@ export default function GamePage() {
             trollEvent={gameState.trollEvent}
             onHide={handleHideAndPass}
             onReroll={handleReroll}
+            onSettings={handleChangeSettings}
           />
         );
       }
@@ -181,6 +178,7 @@ export default function GamePage() {
         <PassPhoneScreen
           player={currentPlayer}
           onReady={handleReadyToReveal}
+          onSettings={handleChangeSettings}
         />
       );
 
@@ -193,6 +191,7 @@ export default function GamePage() {
           skipVoting={gameState.options.skipVoting}
           startingPlayerIndex={gameState.startingPlayerIndex}
           onEndDiscussion={handleEndDiscussion}
+          onSettings={handleChangeSettings}
         />
       );
 
@@ -203,6 +202,7 @@ export default function GamePage() {
           currentVoterIndex={currentVoterIndex}
           onVote={handleVote}
           onFinishVoting={handleFinishVoting}
+          onSettings={handleChangeSettings}
         />
       );
 
@@ -220,7 +220,7 @@ export default function GamePage() {
       );
 
     default:
-      return <SetupScreen onStartGame={handleStartGame} />;
+      return <SetupScreen onStartGame={handleStartGame} initialSettings={lastSettingsRef.current} />;
   }
 }
 

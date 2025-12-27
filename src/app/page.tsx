@@ -117,8 +117,18 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <div className={`absolute bottom-6 text-zinc-600 text-sm transition-all duration-1000 delay-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
-        Made for football fans 🌟
+      <div className={`absolute bottom-6 transition-all duration-1000 delay-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
+        <div className="group relative cursor-pointer">
+          <span className="text-zinc-600 text-sm group-hover:text-zinc-400 transition-colors">
+            Made for football fans 🌟
+          </span>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-xs text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-zinc-700 shadow-lg">
+            <a href="mailto:tomasdavola@gmail.com" className="hover:text-emerald-400 transition-colors">
+              tomasdavola@gmail.com
+            </a>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-800" />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -5,26 +5,36 @@ import Image from "next/image";
 import { GameOptions } from "@/lib/gameState";
 import { PlayerSourceSelection, CLUBS } from "@/lib/players";
 
-interface SetupScreenProps {
-  onStartGame: (playerNames: string[], discussionTime: number, options: GameOptions) => void;
+export interface SavedSettings {
+  playerNames: string[];
+  discussionTime: number;
+  options: GameOptions;
 }
 
-export default function SetupScreen({ onStartGame }: SetupScreenProps) {
-  const [playerCount, setPlayerCount] = useState(4);
-  const [playerNames, setPlayerNames] = useState<string[]>(["", "", "", ""]);
-  const [discussionTime, setDiscussionTime] = useState(180);
-  const [noTimer, setNoTimer] = useState(false);
-  const [skipVoting, setSkipVoting] = useState(false);
-  const [imposterCount, setImposterCount] = useState(1);
-  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(false);
-  const [trollChance, setTrollChance] = useState(0);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+interface SetupScreenProps {
+  onStartGame: (playerNames: string[], discussionTime: number, options: GameOptions) => void;
+  initialSettings?: SavedSettings | null;
+}
+
+export default function SetupScreen({ onStartGame, initialSettings }: SetupScreenProps) {
+  // Initialize from saved settings if available
+  const [playerCount, setPlayerCount] = useState(initialSettings?.playerNames.length ?? 4);
+  const [playerNames, setPlayerNames] = useState<string[]>(initialSettings?.playerNames ?? ["", "", "", ""]);
+  const [discussionTime, setDiscussionTime] = useState(initialSettings?.options.noTimer ? 180 : (initialSettings?.discussionTime ?? 180));
+  const [noTimer, setNoTimer] = useState(initialSettings?.options.noTimer ?? false);
+  const [skipVoting, setSkipVoting] = useState(initialSettings?.options.skipVoting ?? false);
+  const [imposterCount, setImposterCount] = useState(initialSettings?.options.imposterCount ?? 1);
+  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(initialSettings?.options.imposterLessLikelyToStart ?? false);
+  const [trollChance, setTrollChance] = useState(initialSettings?.options.trollChance ?? 0);
+  const [showAdvanced, setShowAdvanced] = useState(
+    (initialSettings?.options.imposterLessLikelyToStart || (initialSettings?.options.trollChance ?? 0) > 0) ?? false
+  );
   const [step, setStep] = useState<"count" | "names" | "source">("count");
   
   // Multi-select source state
-  const [selectCurrentStars, setSelectCurrentStars] = useState(true);
-  const [selectLegends, setSelectLegends] = useState(true);
-  const [selectedClubs, setSelectedClubs] = useState<string[]>([]);
+  const [selectCurrentStars, setSelectCurrentStars] = useState(initialSettings?.options.sourceSelection.currentStars ?? true);
+  const [selectLegends, setSelectLegends] = useState(initialSettings?.options.sourceSelection.legends ?? true);
+  const [selectedClubs, setSelectedClubs] = useState<string[]>(initialSettings?.options.sourceSelection.clubs ?? []);
   
   // Max imposters is n-3 if troll mode enabled (to allow +1 imposter event), otherwise n-2
   const trollEnabled = trollChance > 0;
