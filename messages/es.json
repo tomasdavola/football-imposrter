@@ -1,0 +1,112 @@
+{
+  "common": {
+    "start": "Iniciar Juego",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "settings": "Ajustes",
+    "playAgain": "Jugar de Nuevo",
+    "players": "Jugadores",
+    "player": "Jugador",
+    "imposter": "Impostor",
+    "imposters": "Impostores",
+    "ready": "Listo",
+    "hide": "Ocultar y Pasar",
+    "reroll": "Reiniciar",
+    "loading": "Cargando..."
+  },
+  "home": {
+    "title": "Football Imposter",
+    "subtitle": "¿Puedes encontrar al falso hincha?",
+    "description": "Un jugador está fingiendo — ¿puedes descubrirlo?",
+    "playButton": "Jugar Ahora",
+    "howToPlay": "Cómo Jugar",
+    "madeFor": "Hecho para fanáticos del fútbol",
+    "contact": "Contacto"
+  },
+  "setup": {
+    "howManyPlayers": "¿Cuántos jugadores?",
+    "playerNames": "Nombres de Jugadores",
+    "enterName": "Ingresa nombre",
+    "discussionTime": "Tiempo de Discusión",
+    "minutes": "min",
+    "noTimer": "Sin límite",
+    "options": "Opciones",
+    "manualVoting": "Votación Manual (IRL)",
+    "manualVotingDesc": "Saltar votación en la app, hazlo en persona",
+    "imposterCount": "Impostores",
+    "advancedSettings": "Ajustes Avanzados",
+    "imposterLessLikely": "Impostor menos probable de empezar",
+    "imposterLessLikelyDesc": "Reduce la probabilidad de que el impostor inicie la discusión",
+    "trollMode": "Modo Troll",
+    "trollModeDesc": "Pueden ocurrir giros caóticos aleatorios",
+    "chooseSource": "Elegir Fuente de Jugadores",
+    "currentStars": "Estrellas Actuales",
+    "legends": "Leyendas",
+    "liveClubData": "Datos de Clubes en Vivo",
+    "selectAll": "Seleccionar Todo",
+    "deselectAll": "Deseleccionar Todo",
+    "clubsSelected": "{count} club(es) seleccionado(s)",
+    "allStars": "Todas las Estrellas seleccionadas",
+    "currentStarsOnly": "Solo Estrellas Actuales",
+    "legendsOnly": "Solo Leyendas",
+    "selectSource": "Por favor selecciona al menos una fuente",
+    "letsPlay": "¡A Jugar!"
+  },
+  "pass": {
+    "passTo": "Pasa el teléfono a",
+    "tapWhenReady": "Toca cuando estés listo para ver tu rol",
+    "keepSecret": "¡Mantenlo en secreto!"
+  },
+  "reveal": {
+    "youAreThe": "Eres el",
+    "yourPlayer": "Tu jugador es",
+    "actNormal": "¡Actúa normal! Mézclate con los demás.",
+    "rememberPlayer": "¡Recuerda este jugador para la discusión!",
+    "everyoneHas": "¡Todos tienen un jugador DIFERENTE!",
+    "payAttention": "Presta atención a lo que dicen los demás...",
+    "rerollWarning": "Esto reiniciará la ronda con un nuevo jugador y reasignará todos los roles. Todos tendrán que ver su rol de nuevo.",
+    "rerollButton": "🎲 Reiniciar Ronda",
+    "imposterReroll": "¿No conoces este jugador? Reinicia para uno nuevo",
+    "playerReroll": "¿Necesitas otro jugador? Reinicia la ronda"
+  },
+  "discussion": {
+    "discussion": "Discusión",
+    "timeRemaining": "Tiempo Restante",
+    "starts": "¡inicia la discusión!",
+    "findImposter": "¡Encuentra al impostor!",
+    "skipToVoting": "Ir a Votación",
+    "skipToResults": "Ir a Resultados",
+    "endDiscussion": "Terminar Discusión"
+  },
+  "voting": {
+    "voting": "Votación",
+    "whoIsImposter": "¿Quién es el impostor?",
+    "selectPlayer": "Selecciona un jugador para votar",
+    "votesIn": "votos registrados"
+  },
+  "results": {
+    "results": "Resultados",
+    "theImposter": "El impostor era",
+    "theImposters": "Los impostores eran",
+    "secretPlayer": "El jugador secreto era",
+    "noOneEliminated": "Nadie fue eliminado",
+    "wasEliminated": "fue eliminado",
+    "imposterWins": "¡Gana el Impostor!",
+    "crewWins": "¡Gana el Equipo!",
+    "trollTwist": "Giro Troll",
+    "extraImposter": "¡Había un impostor extra!",
+    "allImposters": "¡Todos eran impostores!",
+    "noImposters": "¡No había impostores!",
+    "differentPlayers": "¡Todos tenían un jugador diferente!"
+  },
+  "language": {
+    "select": "Idioma",
+    "en": "English",
+    "es": "Español",
+    "pt": "Português",
+    "it": "Italiano",
+    "fr": "Français"
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "common": {
+    "start": "Iniciar Jogo",
+    "next": "Próximo",
+    "back": "Voltar",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "settings": "Configurações",
+    "playAgain": "Jogar Novamente",
+    "players": "Jogadores",
+    "player": "Jogador",
+    "imposter": "Impostor",
+    "imposters": "Impostores",
+    "ready": "Pronto",
+    "hide": "Esconder e Passar",
+    "reroll": "Reiniciar",
+    "loading": "Carregando..."
+  },
+  "home": {
+    "title": "Football Imposter",
+    "subtitle": "Você consegue encontrar o falso torcedor?",
+    "description": "Um jogador está fingindo — você consegue descobrir?",
+    "playButton": "Jogar Agora",
+    "howToPlay": "Como Jogar",
+    "madeFor": "Feito para fãs de futebol",
+    "contact": "Contato"
+  },
+  "setup": {
+    "howManyPlayers": "Quantos jogadores?",
+    "playerNames": "Nomes dos Jogadores",
+    "enterName": "Digite o nome",
+    "discussionTime": "Tempo de Discussão",
+    "minutes": "min",
+    "noTimer": "Sem limite",
+    "options": "Opções",
+    "manualVoting": "Votação Manual (IRL)",
+    "manualVotingDesc": "Pular votação no app, faça pessoalmente",
+    "imposterCount": "Impostores",
+    "advancedSettings": "Configurações Avançadas",
+    "imposterLessLikely": "Impostor menos provável de começar",
+    "imposterLessLikelyDesc": "Reduz a chance do impostor iniciar a discussão",
+    "trollMode": "Modo Troll",
+    "trollModeDesc": "Reviravoltas caóticas aleatórias podem ocorrer",
+    "chooseSource": "Escolher Fonte de Jogadores",
+    "currentStars": "Estrelas Atuais",
+    "legends": "Lendas",
+    "liveClubData": "Dados de Clubes ao Vivo",
+    "selectAll": "Selecionar Tudo",
+    "deselectAll": "Desmarcar Tudo",
+    "clubsSelected": "{count} clube(s) selecionado(s)",
+    "allStars": "Todas as Estrelas selecionadas",
+    "currentStarsOnly": "Apenas Estrelas Atuais",
+    "legendsOnly": "Apenas Lendas",
+    "selectSource": "Por favor selecione pelo menos uma fonte",
+    "letsPlay": "Vamos Jogar!"
+  },
+  "pass": {
+    "passTo": "Passe o telefone para",
+    "tapWhenReady": "Toque quando estiver pronto para ver seu papel",
+    "keepSecret": "Mantenha em segredo!"
+  },
+  "reveal": {
+    "youAreThe": "Você é o",
+    "yourPlayer": "Seu jogador é",
+    "actNormal": "Aja normalmente! Misture-se com os outros.",
+    "rememberPlayer": "Lembre-se deste jogador para a discussão!",
+    "everyoneHas": "Todos têm um jogador DIFERENTE!",
+    "payAttention": "Preste atenção no que os outros dizem...",
+    "rerollWarning": "Isso vai reiniciar a rodada com um novo jogador e reatribuir todos os papéis. Todos precisarão ver seu papel novamente.",
+    "rerollButton": "🎲 Reiniciar Rodada",
+    "imposterReroll": "Não conhece este jogador? Reinicie para um novo",
+    "playerReroll": "Precisa de outro jogador? Reinicie a rodada"
+  },
+  "discussion": {
+    "discussion": "Discussão",
+    "timeRemaining": "Tempo Restante",
+    "starts": "inicia a discussão!",
+    "findImposter": "Encontre o impostor!",
+    "skipToVoting": "Ir para Votação",
+    "skipToResults": "Ir para Resultados",
+    "endDiscussion": "Encerrar Discussão"
+  },
+  "voting": {
+    "voting": "Votação",
+    "whoIsImposter": "Quem é o impostor?",
+    "selectPlayer": "Selecione um jogador para votar",
+    "votesIn": "votos registrados"
+  },
+  "results": {
+    "results": "Resultados",
+    "theImposter": "O impostor era",
+    "theImposters": "Os impostores eram",
+    "secretPlayer": "O jogador secreto era",
+    "noOneEliminated": "Ninguém foi eliminado",
+    "wasEliminated": "foi eliminado",
+    "imposterWins": "Impostor Vence!",
+    "crewWins": "Equipe Vence!",
+    "trollTwist": "Reviravolta Troll",
+    "extraImposter": "Havia um impostor extra!",
+    "allImposters": "Todos eram impostores!",
+    "noImposters": "Não havia impostores!",
+    "differentPlayers": "Todos tinham um jogador diferente!"
+  },
+  "language": {
+    "select": "Idioma",
+    "en": "English",
+    "es": "Español",
+    "pt": "Português",
+    "it": "Italiano",
+    "fr": "Français"
+  }
+}

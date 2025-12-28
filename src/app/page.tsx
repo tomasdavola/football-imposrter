@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations();
+  const locale = useLocale();
 
   useEffect(() => {
     setMounted(true);
@@ -39,6 +43,11 @@ export default function Home() {
         )}
       </div>
 
+      {/* Language switcher */}
+      <div className={`absolute top-4 right-4 z-20 transition-all duration-1000 ${mounted ? "opacity-100" : "opacity-0"}`}>
+        <LanguageSwitcher currentLocale={locale} />
+      </div>
+
       {/* Main content */}
       <div className={`relative z-10 text-center space-y-8 max-w-lg transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
         {/* Logo/Icon */}
@@ -61,7 +70,7 @@ export default function Home() {
             <span className="text-white">Imposter</span>
           </h1>
           <p className="text-zinc-400 text-lg md:text-xl max-w-md mx-auto">
-            One player is faking it. Can you find them before they blend in?
+            {t("home.description")}
           </p>
         </div>
 
@@ -71,11 +80,11 @@ export default function Home() {
             href="/game"
             className="block w-full py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-black font-bold text-xl rounded-2xl hover:from-emerald-400 hover:to-green-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-emerald-500/25"
           >
-            🎮 Start Game
+            🎮 {t("common.start")}
           </Link>
           
           <p className="text-zinc-600 text-sm">
-            Pass-the-phone mode • 3-10 players
+            Pass-the-phone mode • 3-10 {t("common.players")}
           </p>
         </div>
 
@@ -120,7 +129,7 @@ export default function Home() {
       <div className={`absolute bottom-6 transition-all duration-1000 delay-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
         <div className="group relative cursor-pointer">
           <span className="text-zinc-600 text-sm group-hover:text-zinc-400 transition-colors">
-            Made for football fans 🌟
+            {t("home.madeFor")} 🌟
           </span>
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-xs text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-zinc-700 shadow-lg">
             <a href="mailto:tomasdavola@gmail.com" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">

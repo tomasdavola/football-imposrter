@@ -1,0 +1,112 @@
+{
+  "common": {
+    "start": "Start Game",
+    "next": "Next",
+    "back": "Back",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "settings": "Settings",
+    "playAgain": "Play Again",
+    "players": "Players",
+    "player": "Player",
+    "imposter": "Imposter",
+    "imposters": "Imposters",
+    "ready": "Ready",
+    "hide": "Hide & Pass",
+    "reroll": "Reroll",
+    "loading": "Loading..."
+  },
+  "home": {
+    "title": "Football Imposter",
+    "subtitle": "Can you spot the fake fan?",
+    "description": "One player is faking it — can you spot them?",
+    "playButton": "Play Now",
+    "howToPlay": "How to Play",
+    "madeFor": "Made for football fans",
+    "contact": "Contact"
+  },
+  "setup": {
+    "howManyPlayers": "How many players?",
+    "playerNames": "Player Names",
+    "enterName": "Enter name",
+    "discussionTime": "Discussion Time",
+    "minutes": "min",
+    "noTimer": "None",
+    "options": "Options",
+    "manualVoting": "Manual Voting (IRL)",
+    "manualVotingDesc": "Skip in-app voting, do it in real life",
+    "imposterCount": "Imposters",
+    "advancedSettings": "Advanced Settings",
+    "imposterLessLikely": "Imposter less likely to start",
+    "imposterLessLikelyDesc": "Reduces chance of imposter starting discussion",
+    "trollMode": "Troll Mode",
+    "trollModeDesc": "Random chaotic twists may occur",
+    "chooseSource": "Choose Player Source",
+    "currentStars": "Current Stars",
+    "legends": "Legends",
+    "liveClubData": "Live Club Data",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "clubsSelected": "{count} club(s) selected",
+    "allStars": "All Stars selected",
+    "currentStarsOnly": "Current Stars only",
+    "legendsOnly": "Legends only",
+    "selectSource": "Please select at least one source",
+    "letsPlay": "Let's Play!"
+  },
+  "pass": {
+    "passTo": "Pass the phone to",
+    "tapWhenReady": "Tap when ready to see your role",
+    "keepSecret": "Keep it secret!"
+  },
+  "reveal": {
+    "youAreThe": "You are the",
+    "yourPlayer": "Your player is",
+    "actNormal": "Act normal! Blend in with the others.",
+    "rememberPlayer": "Remember this player for the discussion!",
+    "everyoneHas": "Everyone has a DIFFERENT player!",
+    "payAttention": "Pay attention to what others say...",
+    "rerollWarning": "This will reset the round with a new player and reassign all roles. Everyone will need to see their role again.",
+    "rerollButton": "🎲 Reroll Round",
+    "imposterReroll": "Don't know this player? Reroll for a new one",
+    "playerReroll": "Need a different player? Reroll the round"
+  },
+  "discussion": {
+    "discussion": "Discussion",
+    "timeRemaining": "Time Remaining",
+    "starts": "starts the discussion!",
+    "findImposter": "Find the imposter!",
+    "skipToVoting": "Skip to Voting",
+    "skipToResults": "Skip to Results",
+    "endDiscussion": "End Discussion"
+  },
+  "voting": {
+    "voting": "Voting",
+    "whoIsImposter": "Who is the imposter?",
+    "selectPlayer": "Select a player to vote",
+    "votesIn": "votes in"
+  },
+  "results": {
+    "results": "Results",
+    "theImposter": "The imposter was",
+    "theImposters": "The imposters were",
+    "secretPlayer": "The secret player was",
+    "noOneEliminated": "No one was eliminated",
+    "wasEliminated": "was eliminated",
+    "imposterWins": "Imposter Wins!",
+    "crewWins": "Crew Wins!",
+    "trollTwist": "Troll Twist",
+    "extraImposter": "There was an extra imposter!",
+    "allImposters": "Everyone was an imposter!",
+    "noImposters": "There were no imposters!",
+    "differentPlayers": "Everyone had a different player!"
+  },
+  "language": {
+    "select": "Language",
+    "en": "English",
+    "es": "Español",
+    "pt": "Português",
+    "it": "Italiano",
+    "fr": "Français"
+  }
+}

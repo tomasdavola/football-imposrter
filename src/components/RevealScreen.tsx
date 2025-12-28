@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Player, TrollEvent } from "@/lib/gameState";
 import { FootballPlayer } from "@/lib/players";
 
@@ -14,6 +15,7 @@ interface RevealScreenProps {
 }
 
 export default function RevealScreen({ player, secretPlayer, trollEvent, onHide, onReroll, onSettings }: RevealScreenProps) {
+  const t = useTranslations();
   const [revealed, setRevealed] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
   
@@ -28,10 +30,9 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
           <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center">
             <span className="text-3xl">⚠️</span>
           </div>
-          <h3 className="text-xl font-bold text-white">Reroll Round?</h3>
+          <h3 className="text-xl font-bold text-white">{t("reveal.rerollButton")}</h3>
           <p className="text-zinc-400 text-sm">
-            This will restart the round with a <strong className="text-white">new player</strong> and <strong className="text-white">reassign all roles</strong>. 
-            Everyone will need to reveal their roles again.
+            {t("reveal.rerollWarning")}
           </p>
         </div>
         <div className="flex gap-3">
@@ -39,7 +40,7 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
             onClick={() => setShowRerollConfirm(false)}
             className="flex-1 py-3 bg-zinc-800 text-zinc-300 font-bold rounded-xl hover:bg-zinc-700 transition-all border border-zinc-700"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => {
@@ -48,7 +49,7 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
             }}
             className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold rounded-xl hover:from-amber-400 hover:to-orange-500 transition-all"
           >
-            🎲 Reroll
+            🎲 {t("common.reroll")}
           </button>
         </div>
       </div>
@@ -80,14 +81,14 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
           
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-white">{player.name}</h1>
-            <p className="text-zinc-400">Tap to reveal your role</p>
+            <p className="text-zinc-400">{t("pass.tapWhenReady")}</p>
           </div>
 
           <button
             onClick={() => setRevealed(true)}
             className="w-[calc(100%+2rem)] -mx-4 py-5 bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold text-xl rounded-xl hover:from-amber-400 hover:to-orange-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-500/25"
           >
-            👁️ Reveal My Role
+            👁️ {t("common.ready")}
           </button>
         </div>
       </div>
@@ -109,11 +110,11 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-5xl font-black text-red-500 tracking-tight">
-                IMPOSTER
+              <h1 className="text-5xl font-black text-red-500 tracking-tight uppercase">
+                {t("common.imposter")}
               </h1>
               <p className="text-xl text-zinc-300">
-                You don&apos;t know the player!
+                {t("reveal.actNormal")}
               </p>
               <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
                 <p className="text-zinc-400 text-sm">
@@ -129,13 +130,13 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
                 onClick={onHide}
                 className="w-full py-5 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold text-xl rounded-xl hover:from-red-400 hover:to-red-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-red-500/25"
               >
-                Got it — Hide & Pass Phone
+                {t("common.hide")}
               </button>
               <button
                 onClick={() => setShowRerollConfirm(true)}
                 className="w-full py-3 bg-zinc-800/50 text-zinc-400 font-medium rounded-xl hover:bg-zinc-800 hover:text-zinc-300 transition-all border border-zinc-700"
               >
-                🎲 Don&apos;t want to be imposter? Reroll
+                🎲 {t("reveal.imposterReroll")}
               </button>
             </div>
           </div>
@@ -209,13 +210,13 @@ export default function RevealScreen({ player, secretPlayer, trollEvent, onHide,
             onClick={onHide}
             className="w-full py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-black font-bold text-xl rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/25"
           >
-            Got it — Hide & Pass Phone
+            {t("common.hide")}
           </button>
           <button
             onClick={() => setShowRerollConfirm(true)}
             className="w-full py-3 bg-zinc-800/50 text-zinc-400 font-medium rounded-xl hover:bg-zinc-800 hover:text-zinc-300 transition-all border border-zinc-700"
           >
-            🎲 Don&apos;t know this player? Reroll
+            🎲 {t("reveal.playerReroll")}
           </button>
         </div>
       </div>

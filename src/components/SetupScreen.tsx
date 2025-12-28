@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 import { GameOptions } from "@/lib/gameState";
 import { PlayerSourceSelection, CLUBS } from "@/lib/players";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export interface SavedSettings {
   playerNames: string[];
@@ -17,17 +19,20 @@ interface SetupScreenProps {
 }
 
 export default function SetupScreen({ onStartGame, initialSettings }: SetupScreenProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  
   // Initialize from saved settings if available
   const [playerCount, setPlayerCount] = useState(initialSettings?.playerNames.length ?? 4);
   const [playerNames, setPlayerNames] = useState<string[]>(initialSettings?.playerNames ?? ["", "", "", ""]);
   const [discussionTime, setDiscussionTime] = useState(initialSettings?.options.noTimer ? 180 : (initialSettings?.discussionTime ?? 180));
   const [noTimer, setNoTimer] = useState(initialSettings?.options.noTimer ?? false);
-  const [skipVoting, setSkipVoting] = useState(initialSettings?.options.skipVoting ?? false);
+  const [skipVoting, setSkipVoting] = useState(initialSettings?.options.skipVoting ?? true);
   const [imposterCount, setImposterCount] = useState(initialSettings?.options.imposterCount ?? 1);
-  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(initialSettings?.options.imposterLessLikelyToStart ?? false);
-  const [trollChance, setTrollChance] = useState(initialSettings?.options.trollChance ?? 0);
+  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(initialSettings?.options.imposterLessLikelyToStart ?? true);
+  const [trollChance, setTrollChance] = useState(initialSettings?.options.trollChance ?? 25);
   const [showAdvanced, setShowAdvanced] = useState(
-    (initialSettings?.options.imposterLessLikelyToStart || (initialSettings?.options.trollChance ?? 0) > 0) ?? false
+    initialSettings ? (initialSettings.options.imposterLessLikelyToStart || (initialSettings.options.trollChance ?? 0) > 0) : true
   );
   const [step, setStep] = useState<"count" | "names" | "source">("count");
   
@@ -112,12 +117,17 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
   const allNamesValid = playerNames.every((_, i) => true); // Allow empty names (will default)
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
+      {/* Language switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher currentLocale={locale} />
+      </div>
+
       {step === "count" ? (
         <div className="w-full max-w-md space-y-8 animate-fade-in">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-emerald-400">How many players?</h2>
-            <p className="text-zinc-400">3-10 players recommended</p>
+            <h2 className="text-2xl font-bold text-emerald-400">{t("setup.howManyPlayers")}</h2>
+            <p className="text-zinc-400">3-10 {t("setup.players")}</p>
           </div>
 
           <div className="flex items-center justify-center gap-6">
@@ -142,7 +152,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
 
           {/* Imposter Count */}
           <div className="space-y-3">
-            <label className="block text-center text-zinc-400">Imposters</label>
+            <label className="block text-center text-zinc-400">{t("setup.imposters")}</label>
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => setImposterCount(Math.max(1, imposterCount - 1))}
@@ -167,7 +177,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
 
           {/* Discussion Time */}
           <div className="space-y-3">
-            <label className="block text-center text-zinc-400">Discussion Time</label>
+            <label className="block text-center text-zinc-400">{t("setup.discussionTime")}</label>
             <div className="flex justify-center gap-2 flex-wrap">
               <button
                 onClick={() => setNoTimer(true)}
@@ -177,7 +187,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
                     : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                 }`}
               >
-                ∞ None
+                ∞ {t("setup.none")}
               </button>
               {[60, 120, 180, 300].map(time => (
                 <button
@@ -198,8 +208,8 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
           {/* Skip Voting Toggle */}
           <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
             <div>
-              <p className="text-zinc-200 font-medium">Manual Voting (IRL)</p>
-              <p className="text-zinc-500 text-sm">Skip in-app voting, do it in person</p>
+              <p className="text-zinc-200 font-medium">{t("setup.manualVoting")}</p>
+              <p className="text-zinc-500 text-sm">{t("setup.manualVotingDesc")}</p>
             </div>
             <button
               onClick={() => setSkipVoting(!skipVoting)}
