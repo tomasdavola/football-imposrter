@@ -31,7 +31,7 @@
     "enterName": "Digite o nome",
     "discussionTime": "Tempo de Discussão",
     "minutes": "min",
-    "noTimer": "Sem limite",
+    "none": "Sem limite",
     "options": "Opções",
     "manualVoting": "Votação Manual (IRL)",
     "manualVotingDesc": "Pular votação no app, faça pessoalmente",

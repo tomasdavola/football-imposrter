@@ -27,11 +27,13 @@
   },
   "setup": {
     "howManyPlayers": "Combien de joueurs?",
+    "players": "joueurs",
     "playerNames": "Noms des Joueurs",
     "enterName": "Entrez le nom",
     "discussionTime": "Temps de Discussion",
     "minutes": "min",
     "noTimer": "Sans limite",
+    "none": "Sans limite",
     "options": "Options",
     "manualVoting": "Vote Manuel (IRL)",
     "manualVotingDesc": "Passer le vote dans l'app, faites-le en personne",

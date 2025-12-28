@@ -31,7 +31,7 @@
     "enterName": "Inserisci nome",
     "discussionTime": "Tempo di Discussione",
     "minutes": "min",
-    "noTimer": "Nessun limite",
+    "none": "Nessun limite",
     "options": "Opzioni",
     "manualVoting": "Votazione Manuale (IRL)",
     "manualVotingDesc": "Salta la votazione nell'app, fallo di persona",
