@@ -93,9 +93,9 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
   const hasAnySourceSelected = selectCurrentStars || selectLegends || selectedClubs.length > 0;
 
   const handleStart = () => {
-    // Fill empty names with defaults
+    // Fill empty names with localized defaults
     const finalNames = playerNames.map((name, i) => 
-      name.trim() || `Player ${i + 1}`
+      name.trim() || `${t("setup.defaultPlayerName")} ${i + 1}`
     );
     
     const sourceSelection: PlayerSourceSelection = {
@@ -324,7 +324,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
                   type="text"
                   value={name}
                   onChange={(e) => handleNameChange(index, e.target.value)}
-                  placeholder={`Player ${index + 1}`}
+                  placeholder={`${t("setup.defaultPlayerName")} ${index + 1}`}
                   className="w-full pl-12 pr-4 py-3 bg-zinc-800/50 border-2 border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none transition-colors"
                   maxLength={20}
                 />
