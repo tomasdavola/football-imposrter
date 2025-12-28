@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { GameState, GamePhase, GameOptions, createInitialGameState, setupGame } from "@/lib/gameState";
 import { getRandomPlayer, getRandomPlayers, FootballPlayer } from "@/lib/players";
+import { analytics } from "@/lib/analytics";
 import SetupScreen, { SavedSettings } from "@/components/SetupScreen";
 import PassPhoneScreen from "@/components/PassPhoneScreen";
 import RevealScreen from "@/components/RevealScreen";
@@ -18,6 +19,17 @@ export default function GamePage() {
   const [currentVoterIndex, setCurrentVoterIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const lastSettingsRef = useRef<SavedSettings | null>(null);
+  const currentGameNumberRef = useRef<number>(0);
+
+  // Track session start on mount
+  useEffect(() => {
+    analytics.sessionStart();
+    
+    // Track session end on unmount/page close
+    const handleUnload = () => analytics.sessionEnd();
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, []);
 
   const handleStartGame = useCallback(async (playerNames: string[], discussionTime: number, options: GameOptions) => {
     // Save settings for "Play Again"
@@ -34,6 +46,18 @@ export default function GamePage() {
         : undefined;
       const newState = setupGame(playerNames, secretPlayer, discussionTime, options, additionalPlayers);
       setGameState(newState);
+      
+      // Track game start
+      const gameNumber = analytics.getGameNumber();
+      currentGameNumberRef.current = gameNumber;
+      analytics.gameStart({
+        gameNumber,
+        playerCount: playerNames.length,
+        imposterCount: options.imposterCount,
+        discussionTime: options.noTimer ? null : discussionTime,
+        trollEvent: newState.trollEvent,
+        sourceSelection,
+      });
     } catch (error) {
       console.error("Failed to start game:", error);
     } finally {
@@ -61,6 +85,12 @@ export default function GamePage() {
     setGameState(prev => {
       // Skip voting if option is enabled, go directly to results
       const nextPhase = prev.options.skipVoting ? "results" : "voting";
+      
+      // Track game end if going directly to results
+      if (nextPhase === "results") {
+        analytics.gameEnd(currentGameNumberRef.current);
+      }
+      
       return { ...prev, phase: nextPhase as GamePhase };
     });
     setCurrentVoterIndex(0);
@@ -77,6 +107,8 @@ export default function GamePage() {
   }, []);
 
   const handleFinishVoting = useCallback(() => {
+    // Track game end
+    analytics.gameEnd(currentGameNumberRef.current);
     setGameState(prev => ({ ...prev, phase: "results" as GamePhase }));
   }, []);
 
@@ -93,6 +125,18 @@ export default function GamePage() {
           : undefined;
         const newState = setupGame(playerNames, secretPlayer, discussionTime, options, additionalPlayers);
         setGameState(newState);
+        
+        // Track new game start
+        const gameNumber = analytics.incrementGameNumber();
+        currentGameNumberRef.current = gameNumber;
+        analytics.gameStart({
+          gameNumber,
+          playerCount: playerNames.length,
+          imposterCount: options.imposterCount,
+          discussionTime: options.noTimer ? null : discussionTime,
+          trollEvent: newState.trollEvent,
+          sourceSelection,
+        });
       } catch (error) {
         console.error("Failed to restart game:", error);
       } finally {
@@ -125,6 +169,18 @@ export default function GamePage() {
           : undefined;
         const newState = setupGame(playerNames, secretPlayer, discussionTime, options, additionalPlayers);
         setGameState(newState);
+        
+        // Track as new game (reroll counts as a new game)
+        const gameNumber = analytics.incrementGameNumber();
+        currentGameNumberRef.current = gameNumber;
+        analytics.gameStart({
+          gameNumber,
+          playerCount: playerNames.length,
+          imposterCount: options.imposterCount,
+          discussionTime: options.noTimer ? null : discussionTime,
+          trollEvent: newState.trollEvent,
+          sourceSelection,
+        });
       } catch (error) {
         console.error("Failed to reroll:", error);
       } finally {
