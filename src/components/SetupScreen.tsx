@@ -172,7 +172,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
                 +
               </button>
             </div>
-            <p className="text-xs text-zinc-500 text-center">Max {maxImposters} imposter{maxImposters > 1 ? 's' : ''} for {playerCount} players</p>
+            <p className="text-xs text-zinc-500 text-center">{t("setup.maxImposters")} {maxImposters} imposter{maxImposters > 1 ? 's' : ''} for {playerCount} players</p>
           </div>
 
           {/* Discussion Time */}
@@ -310,7 +310,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
       ) : step === "names" ? (
         <div className="w-full max-w-md space-y-6 animate-fade-in">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-emerald-400">Enter Player Names</h2>
+            <h2 className="text-2xl font-bold text-emerald-400"> {t("howToPlay.step1Desc")}</h2>
             <p className="text-zinc-400">Or leave blank for defaults</p>
           </div>
 

@@ -92,32 +92,32 @@ export default function Home() {
         <div className="pt-4">
           <details className="group">
             <summary className="cursor-pointer text-zinc-500 hover:text-zinc-400 transition-colors flex items-center justify-center gap-2">
-              <span>📖 How to Play</span>
+              <span>📖 {t("home.howToPlay")}</span>
               <span className="group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <div className="mt-4 p-4 bg-zinc-900/50 rounded-xl border border-zinc-800 text-left space-y-3 animate-fade-in">
               <div className="flex gap-3">
                 <span className="text-2xl">1️⃣</span>
                 <p className="text-zinc-400 text-sm">
-                  <strong className="text-white">Setup:</strong> Enter player names. One random player becomes the Imposter.
+                  <strong className="text-white">{t("howToPlay.step1Title")}:</strong> {t("setup.enterPlayerNames")}
                 </p>
               </div>
               <div className="flex gap-3">
                 <span className="text-2xl">2️⃣</span>
                 <p className="text-zinc-400 text-sm">
-                  <strong className="text-white">Reveal:</strong> Pass the phone. Each player sees if they&apos;re the Imposter or the secret football player.
+                  <strong className="text-white">{t("howToPlay.step2Title")}:</strong> {t("howToPlay.step2Desc")}.
                 </p>
               </div>
               <div className="flex gap-3">
                 <span className="text-2xl">3️⃣</span>
                 <p className="text-zinc-400 text-sm">
-                  <strong className="text-white">Discuss:</strong> Ask questions about the player. The Imposter must fake their knowledge!
+                  <strong className="text-white"> {t("howToPlay.step3Title")}:</strong> {t("howToPlay.step3Desc")}
                 </p>
               </div>
               <div className="flex gap-3">
                 <span className="text-2xl">4️⃣</span>
                 <p className="text-zinc-400 text-sm">
-                  <strong className="text-white">Vote:</strong> Vote out the suspected Imposter. Crew wins if they catch them!
+                  <strong className="text-white">{t("howToPlay.step4Title")}:</strong> {t("howToPlay.step4Desc")}
                 </p>
               </div>
             </div>
