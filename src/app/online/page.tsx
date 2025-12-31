@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { RoomState, RoomSettings, RoomPlayer } from "@/lib/roomState";
 import { getDefaultSourceSelection, CLUBS } from "@/lib/players";
+import { TrollEventType, TROLL_EVENT_INFO, ALL_TROLL_EVENTS } from "@/lib/gameState";
 import { getPusherClient, getRoomChannel, ROOM_EVENTS } from "@/lib/pusher";
 import type PusherClient from "pusher-js";
 import type { Channel } from "pusher-js";
@@ -297,7 +298,8 @@ function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoad
         discussionTime: 180, // 3 minutes default
         imposterCount: 1,
         imposterLessLikelyToStart: true,
-        trollChance: 0,
+        trollChance: 25,
+        enabledTrollEvents: ALL_TROLL_EVENTS,
         sourceSelection: {
           currentStars: true,
           legends: true,
@@ -563,6 +565,9 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
   const [noTimer, setNoTimer] = useState(room.settings.discussionTime === 0);
   const [imposterCount, setImposterCount] = useState(room.settings.imposterCount);
   const [trollChance, setTrollChance] = useState(room.settings.trollChance);
+  const [enabledTrollEvents, setEnabledTrollEvents] = useState<TrollEventType[]>(
+    room.settings.enabledTrollEvents || ALL_TROLL_EVENTS
+  );
   const [imposterLessLikely, setImposterLessLikely] = useState(room.settings.imposterLessLikelyToStart);
   const [selectCurrentStars, setSelectCurrentStars] = useState(room.settings.sourceSelection.currentStars);
   const [selectLegends, setSelectLegends] = useState(room.settings.sourceSelection.legends);
@@ -573,6 +578,14 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
       prev.includes(clubId) 
         ? prev.filter(c => c !== clubId)
         : [...prev, clubId]
+    );
+  };
+
+  const toggleTrollEvent = (event: TrollEventType) => {
+    setEnabledTrollEvents(prev => 
+      prev.includes(event)
+        ? prev.filter(e => e !== event)
+        : [...prev, event]
     );
   };
 
@@ -610,6 +623,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
             imposterCount: Math.min(imposterCount, maxImposters),
             imposterLessLikelyToStart: imposterLessLikely,
             trollChance,
+            enabledTrollEvents,
             sourceSelection: {
               currentStars: selectCurrentStars,
               legends: selectLegends,
@@ -933,14 +947,34 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
               </div>
 
               {trollChance > 0 && (
-                <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 text-xs text-purple-300 space-y-1">
-                  <p className="font-medium">Possible twists:</p>
-                  <ul className="space-y-0.5 text-purple-400">
-                    <li>• +1 extra imposter</li>
-                    <li>• Everyone is an imposter</li>
-                    <li>• No imposters at all</li>
-                    <li>• Each player gets a different footballer</li>
-                  </ul>
+                <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 text-xs space-y-2">
+                  <p className="font-medium text-purple-300">Select possible twists:</p>
+                  <div className="space-y-1.5">
+                    {ALL_TROLL_EVENTS.map((event) => (
+                      <button
+                        key={event}
+                        onClick={() => toggleTrollEvent(event)}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          enabledTrollEvents.includes(event)
+                            ? "bg-purple-500/30 text-purple-300"
+                            : "bg-zinc-800/50 text-zinc-500"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] ${
+                          enabledTrollEvents.includes(event)
+                            ? "border-purple-400 bg-purple-500 text-white"
+                            : "border-zinc-600"
+                        }`}>
+                          {enabledTrollEvents.includes(event) && "✓"}
+                        </span>
+                        <span>{TROLL_EVENT_INFO[event].emoji}</span>
+                        <span className="flex-1 text-left">{TROLL_EVENT_INFO[event].description}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {enabledTrollEvents.length === 0 && (
+                    <p className="text-amber-400 text-center mt-2">⚠️ Select at least one event</p>
+                  )}
                 </div>
               )}
 

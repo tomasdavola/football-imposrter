@@ -15,6 +15,15 @@ export type TrollEvent =
   | "noImposters" 
   | "differentPlayers";
 
+export type TrollEventType = Exclude<TrollEvent, null>;
+
+export const TROLL_EVENT_INFO: Record<TrollEventType, { name: string; emoji: string; description: string }> = {
+  extraImposter: { name: "Extra Imposter", emoji: "👥", description: "+1 imposter" },
+  allImposters: { name: "All Imposters", emoji: "🔴", description: "Everyone is an imposter" },
+  noImposters: { name: "No Imposters", emoji: "✅", description: "No imposters at all" },
+  differentPlayers: { name: "Different Players", emoji: "🎭", description: "Each player gets a different footballer" },
+};
+
 export interface Player {
   id: number;
   name: string;
@@ -32,7 +41,10 @@ export interface GameOptions {
   // Advanced settings
   imposterLessLikelyToStart: boolean;
   trollChance: number; // 0-100 percent chance of troll event
+  enabledTrollEvents: TrollEventType[]; // Which troll events can occur
 }
+
+export const ALL_TROLL_EVENTS: TrollEventType[] = ["extraImposter", "allImposters", "noImposters", "differentPlayers"];
 
 export interface GameState {
   phase: GamePhase;
@@ -61,11 +73,12 @@ export function createInitialGameState(): GameState {
     eliminatedPlayerId: null,
     options: {
       noTimer: false,
-      skipVoting: false,
+      skipVoting: true,
       imposterCount: 1,
       sourceSelection: getDefaultSourceSelection(),
       imposterLessLikelyToStart: false,
-      trollChance: 0,
+      trollChance: 25,
+      enabledTrollEvents: ALL_TROLL_EVENTS,
     },
     trollEvent: null,
   };
@@ -82,23 +95,26 @@ export function setupGame(
   let actualImposterCount = options.imposterCount;
   
   // Check for troll mode events based on trollChance (0-100)
-  if (options.trollChance > 0 && Math.random() < options.trollChance / 100) {
-    const trollRoll = Math.random();
-    if (trollRoll < 0.25) {
-      // Extra imposter
-      trollEvent = "extraImposter";
-      actualImposterCount = Math.min(options.imposterCount + 1, playerNames.length - 1);
-    } else if (trollRoll < 0.5) {
-      // Everyone is imposter
-      trollEvent = "allImposters";
-      actualImposterCount = playerNames.length;
-    } else if (trollRoll < 0.75) {
-      // No imposter
-      trollEvent = "noImposters";
-      actualImposterCount = 0;
-    } else {
-      // Different players for everyone
-      trollEvent = "differentPlayers";
+  const enabledEvents = options.enabledTrollEvents || ALL_TROLL_EVENTS;
+  if (options.trollChance > 0 && enabledEvents.length > 0 && Math.random() < options.trollChance / 100) {
+    // Pick randomly from enabled events
+    const selectedEvent = enabledEvents[Math.floor(Math.random() * enabledEvents.length)];
+    trollEvent = selectedEvent;
+    
+    // Apply the effect based on selected event
+    switch (selectedEvent) {
+      case "extraImposter":
+        actualImposterCount = Math.min(options.imposterCount + 1, playerNames.length - 1);
+        break;
+      case "allImposters":
+        actualImposterCount = playerNames.length;
+        break;
+      case "noImposters":
+        actualImposterCount = 0;
+        break;
+      case "differentPlayers":
+        // Imposter count stays the same, but each player gets a different footballer
+        break;
     }
   }
   

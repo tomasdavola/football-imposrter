@@ -87,7 +87,7 @@ export async function POST(request: Request, context: RouteContext) {
         }
 
         // Roll for troll event
-        const trollEvent = rollForTrollEvent(room.settings.trollChance);
+        const trollEvent = rollForTrollEvent(room.settings.trollChance, room.settings.enabledTrollEvents);
         room.trollEvent = trollEvent;
 
         // Get secret player

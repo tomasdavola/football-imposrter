@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { GameOptions } from "@/lib/gameState";
+import { GameOptions, TrollEventType, TROLL_EVENT_INFO, ALL_TROLL_EVENTS } from "@/lib/gameState";
 import { PlayerSourceSelection, CLUBS } from "@/lib/players";
 
 export interface SavedSettings {
@@ -22,10 +22,13 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
   const [playerNames, setPlayerNames] = useState<string[]>(initialSettings?.playerNames ?? ["", "", "", ""]);
   const [discussionTime, setDiscussionTime] = useState(initialSettings?.options.noTimer ? 180 : (initialSettings?.discussionTime ?? 180));
   const [noTimer, setNoTimer] = useState(initialSettings?.options.noTimer ?? false);
-  const [skipVoting, setSkipVoting] = useState(initialSettings?.options.skipVoting ?? false);
+  const [skipVoting, setSkipVoting] = useState(initialSettings?.options.skipVoting ?? true);
   const [imposterCount, setImposterCount] = useState(initialSettings?.options.imposterCount ?? 1);
-  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(initialSettings?.options.imposterLessLikelyToStart ?? false);
-  const [trollChance, setTrollChance] = useState(initialSettings?.options.trollChance ?? 0);
+  const [imposterLessLikelyToStart, setImposterLessLikelyToStart] = useState(initialSettings?.options.imposterLessLikelyToStart ?? true);
+  const [trollChance, setTrollChance] = useState(initialSettings?.options.trollChance ?? 25);
+  const [enabledTrollEvents, setEnabledTrollEvents] = useState<TrollEventType[]>(
+    initialSettings?.options.enabledTrollEvents ?? ALL_TROLL_EVENTS
+  );
   const [showAdvanced, setShowAdvanced] = useState(
     (initialSettings?.options.imposterLessLikelyToStart || (initialSettings?.options.trollChance ?? 0) > 0) ?? false
   );
@@ -85,6 +88,14 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
     );
   };
 
+  const toggleTrollEvent = (event: TrollEventType) => {
+    setEnabledTrollEvents(prev => 
+      prev.includes(event)
+        ? prev.filter(e => e !== event)
+        : [...prev, event]
+    );
+  };
+
   const hasAnySourceSelected = selectCurrentStars || selectLegends || selectedClubs.length > 0;
 
   const handleStart = () => {
@@ -106,6 +117,7 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
       sourceSelection,
       imposterLessLikelyToStart,
       trollChance,
+      enabledTrollEvents,
     });
   };
 
@@ -277,14 +289,34 @@ export default function SetupScreen({ onStartGame, initialSettings }: SetupScree
               </div>
 
               {trollEnabled && (
-                <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 text-xs text-purple-300 space-y-1">
-                  <p className="font-medium">Possible twists:</p>
-                  <ul className="space-y-0.5 text-purple-400">
-                    <li>• +1 extra imposter</li>
-                    <li>• Everyone is an imposter</li>
-                    <li>• No imposters at all</li>
-                    <li>• Each player gets a different footballer</li>
-                  </ul>
+                <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 text-xs space-y-2">
+                  <p className="font-medium text-purple-300">Select possible twists:</p>
+                  <div className="space-y-1.5">
+                    {ALL_TROLL_EVENTS.map((event) => (
+                      <button
+                        key={event}
+                        onClick={() => toggleTrollEvent(event)}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all cursor-pointer ${
+                          enabledTrollEvents.includes(event)
+                            ? "bg-purple-500/30 text-purple-300"
+                            : "bg-zinc-800/50 text-zinc-500"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] ${
+                          enabledTrollEvents.includes(event)
+                            ? "border-purple-400 bg-purple-500 text-white"
+                            : "border-zinc-600"
+                        }`}>
+                          {enabledTrollEvents.includes(event) && "✓"}
+                        </span>
+                        <span>{TROLL_EVENT_INFO[event].emoji}</span>
+                        <span className="flex-1 text-left">{TROLL_EVENT_INFO[event].description}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {enabledTrollEvents.length === 0 && (
+                    <p className="text-amber-400 text-center mt-2">⚠️ Select at least one event</p>
+                  )}
                 </div>
               )}
             </div>

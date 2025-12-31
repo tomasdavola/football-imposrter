@@ -31,15 +31,15 @@ export default function DiscussionScreen({ players, timeSeconds, noTimer, skipVo
     } else {
       // Countdown mode
       if (timeLeft <= 0) return;
-      const interval = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
     }
   }, [isPaused, timeLeft, noTimer]);
 

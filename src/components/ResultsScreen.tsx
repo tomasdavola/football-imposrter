@@ -53,31 +53,31 @@ export default function ResultsScreen({
 
         {/* Result banner - only show win/lose if voting happened */}
         {!skipVoting ? (
-          <div className="text-center space-y-4">
-            <div
-              className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center shadow-2xl ${
-                imposterCaught
-                  ? "bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/50"
-                  : "bg-gradient-to-br from-red-500 to-red-700 shadow-red-500/50"
-              }`}
-            >
-              <span className="text-6xl">{imposterCaught ? "🏆" : "🕵️"}</span>
-            </div>
-
-            <h1
-              className={`text-4xl font-black ${
-                imposterCaught ? "text-emerald-400" : "text-red-400"
-              }`}
-            >
-              {imposterCaught ? "IMPOSTER CAUGHT!" : "IMPOSTER WINS!"}
-            </h1>
-            
-            <p className="text-xl text-zinc-300">
-              {imposterCaught
-                ? "The crew found the imposter!"
-                : "The imposter escaped detection!"}
-            </p>
+        <div className="text-center space-y-4">
+          <div
+            className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center shadow-2xl ${
+              imposterCaught
+                ? "bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/50"
+                : "bg-gradient-to-br from-red-500 to-red-700 shadow-red-500/50"
+            }`}
+          >
+            <span className="text-6xl">{imposterCaught ? "🏆" : "🕵️"}</span>
           </div>
+
+          <h1
+            className={`text-4xl font-black ${
+              imposterCaught ? "text-emerald-400" : "text-red-400"
+            }`}
+          >
+            {imposterCaught ? "IMPOSTER CAUGHT!" : "IMPOSTER WINS!"}
+          </h1>
+          
+          <p className="text-xl text-zinc-300">
+            {imposterCaught
+              ? "The crew found the imposter!"
+              : "The imposter escaped detection!"}
+          </p>
+        </div>
         ) : (
           <div className="text-center space-y-4">
             <div className="w-32 h-32 mx-auto rounded-full flex items-center justify-center shadow-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/50">
@@ -94,52 +94,52 @@ export default function ResultsScreen({
 
         {/* Eliminated player - only show if voting happened */}
         {!skipVoting && eliminatedPlayer && (
-          <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700 text-center">
-            <p className="text-zinc-400 text-sm mb-2">Most votes went to:</p>
+        <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700 text-center">
+          <p className="text-zinc-400 text-sm mb-2">Most votes went to:</p>
             <p className="text-2xl font-bold text-white">{eliminatedPlayer.name}</p>
-            <p
-              className={`text-lg font-medium mt-1 ${
+          <p
+            className={`text-lg font-medium mt-1 ${
                 eliminatedPlayer.isImposter ? "text-red-400" : "text-emerald-400"
-              }`}
-            >
+            }`}
+          >
               {eliminatedPlayer.isImposter ? "🕵️ Was the Imposter!" : "✅ Was innocent!"}
-            </p>
-          </div>
+          </p>
+        </div>
         )}
 
         {/* Vote breakdown - only show if voting happened */}
         {!skipVoting && (
-          <div className="space-y-3">
-            <h3 className="text-lg font-bold text-zinc-400 text-center">Vote Results</h3>
-            <div className="space-y-2">
-              {voteResults.map(({ playerId, votes }) => {
-                const player = players.find(p => p.id === playerId);
-                if (!player) return null;
-                const maxVotes = voteResults[0]?.votes || 1;
-                const barWidth = (votes / maxVotes) * 100;
-                
-                return (
-                  <div key={playerId} className="flex items-center gap-3">
-                    <span className="w-24 truncate text-sm text-zinc-300">
-                      {player.name}
-                      {player.isImposter && " 🕵️"}
-                    </span>
-                    <div className="flex-1 h-6 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          player.isImposter ? "bg-red-500" : "bg-emerald-500"
-                        }`}
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-zinc-400 w-8 text-right">
-                      {votes}
-                    </span>
+        <div className="space-y-3">
+          <h3 className="text-lg font-bold text-zinc-400 text-center">Vote Results</h3>
+          <div className="space-y-2">
+            {voteResults.map(({ playerId, votes }) => {
+              const player = players.find(p => p.id === playerId);
+              if (!player) return null;
+              const maxVotes = voteResults[0]?.votes || 1;
+              const barWidth = (votes / maxVotes) * 100;
+              
+              return (
+                <div key={playerId} className="flex items-center gap-3">
+                  <span className="w-24 truncate text-sm text-zinc-300">
+                    {player.name}
+                    {player.isImposter && " 🕵️"}
+                  </span>
+                  <div className="flex-1 h-6 bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        player.isImposter ? "bg-red-500" : "bg-emerald-500"
+                      }`}
+                      style={{ width: `${barWidth}%` }}
+                    />
                   </div>
-                );
-              })}
-            </div>
+                  <span className="text-sm font-bold text-zinc-400 w-8 text-right">
+                    {votes}
+                  </span>
+                </div>
+              );
+            })}
           </div>
+        </div>
         )}
 
         {/* Reveal the imposters and player */}
@@ -167,7 +167,7 @@ export default function ResultsScreen({
                     <p key={imposter.id} className="text-lg font-bold text-white">{imposter.name}</p>
                   ))}
                 </div>
-                <span className="text-2xl">🕵️</span>
+            <span className="text-2xl">🕵️</span>
               </>
             )}
           </div>
@@ -188,7 +188,7 @@ export default function ResultsScreen({
                     />
                   </div>
                 )}
-                <p className="text-lg font-bold text-white">{secretPlayer.name}</p>
+            <p className="text-lg font-bold text-white">{secretPlayer.name}</p>
               </>
             )}
             {!secretPlayer.photo && <span className="text-2xl">⚽</span>}
@@ -203,12 +203,12 @@ export default function ResultsScreen({
           >
             ⚙️ Settings
           </button>
-          <button
-            onClick={onPlayAgain}
+        <button
+          onClick={onPlayAgain}
             className="flex-[2] py-4 bg-gradient-to-r from-emerald-500 to-green-600 text-black font-bold text-xl rounded-xl hover:from-emerald-400 hover:to-green-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/25"
-          >
-            🔄 Play Again
-          </button>
+        >
+          🔄 Play Again
+        </button>
         </div>
       </div>
     </div>

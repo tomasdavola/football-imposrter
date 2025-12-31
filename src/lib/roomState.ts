@@ -1,4 +1,5 @@
 import { FootballPlayer, PlayerSourceSelection } from "./players";
+import { TrollEventType, ALL_TROLL_EVENTS } from "./gameState";
 
 // Room phases
 export type RoomPhase = 
@@ -30,6 +31,7 @@ export interface RoomSettings {
   imposterCount: number;      // Number of imposters
   imposterLessLikelyToStart: boolean;
   trollChance: number;        // 0-100
+  enabledTrollEvents: TrollEventType[]; // Which troll events can occur
   sourceSelection: PlayerSourceSelection;
 }
 
@@ -85,14 +87,16 @@ export function createInitialRoomState(code: string, adminName: string, settings
 }
 
 // Check if a troll event should happen
-export function rollForTrollEvent(trollChance: number): TrollEvent {
+export function rollForTrollEvent(trollChance: number, enabledEvents?: TrollEventType[]): TrollEvent {
   if (trollChance <= 0) return null;
+  
+  const events = enabledEvents && enabledEvents.length > 0 ? enabledEvents : ALL_TROLL_EVENTS;
+  if (events.length === 0) return null;
   
   const roll = Math.random() * 100;
   if (roll >= trollChance) return null;
   
-  // Random troll event
-  const events: TrollEvent[] = ["extraImposter", "allImposters", "noImposters", "differentPlayers"];
+  // Random troll event from enabled events
   return events[Math.floor(Math.random() * events.length)];
 }
 
