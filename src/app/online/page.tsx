@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { RoomState, RoomSettings, RoomPlayer } from "@/lib/roomState";
 import { getDefaultSourceSelection, CLUBS } from "@/lib/players";
 import { getPusherClient, getRoomChannel, ROOM_EVENTS } from "@/lib/pusher";
@@ -17,6 +18,7 @@ export default function OnlinePage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [initialJoinCode, setInitialJoinCode] = useState<string | null>(null);
   
   // Pusher refs
   const pusherRef = useRef<PusherClient | null>(null);
@@ -25,6 +27,18 @@ export default function OnlinePage() {
   // Get current player
   const currentPlayer = room?.players.find(p => p.id === playerId);
   const isAdmin = currentPlayer?.isAdmin ?? false;
+
+  // Check for join code in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const joinCode = params.get("join");
+    if (joinCode) {
+      setInitialJoinCode(joinCode.toUpperCase());
+      setPhase("join");
+      // Clean up URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   // Fetch room state (sanitized for current player)
   const fetchRoom = async (roomCode: string, pId: string) => {
@@ -70,10 +84,25 @@ export default function OnlinePage() {
       fetchRoom(currentRoomCode, currentPlayerId);
     };
 
+    // Handle player left/kicked - check if we were kicked
+    const handlePlayerLeft = (data: { event: string; kickedPlayerId?: string; updatedAt: number }) => {
+      console.log("Player left notification:", data);
+      if (data.kickedPlayerId === currentPlayerId) {
+        // We were kicked! Redirect to menu
+        alert("You have been removed from the room by the admin.");
+        setRoom(null);
+        setPlayerId(null);
+        setPhase("menu");
+        return;
+      }
+      // Otherwise just refresh room
+      fetchRoom(currentRoomCode, currentPlayerId);
+    };
+
     // Bind to all room events
     channel.bind(ROOM_EVENTS.ROOM_UPDATED, handleRoomUpdate);
     channel.bind(ROOM_EVENTS.PLAYER_JOINED, handleRoomUpdate);
-    channel.bind(ROOM_EVENTS.PLAYER_LEFT, handleRoomUpdate);
+    channel.bind(ROOM_EVENTS.PLAYER_LEFT, handlePlayerLeft);
     channel.bind(ROOM_EVENTS.GAME_STARTED, handleRoomUpdate);
     channel.bind(ROOM_EVENTS.PLAYER_REVEALED, handleRoomUpdate);
     channel.bind(ROOM_EVENTS.PHASE_CHANGED, handleRoomUpdate);
@@ -97,6 +126,27 @@ export default function OnlinePage() {
       }
     }
   }, [room?.phase]);
+
+  // Handle tab close / browser close - leave the room
+  useEffect(() => {
+    if (!room?.code || !playerId) return;
+
+    const roomCode = room.code;
+    const pId = playerId;
+
+    const handleBeforeUnload = () => {
+      // Use sendBeacon for reliable delivery during page unload
+      // This POSTs to a dedicated leave endpoint since sendBeacon only does POST
+      const url = `/api/room/${roomCode}/leave?playerId=${pId}`;
+      navigator.sendBeacon(url, "");
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [room?.code, playerId]);
 
   // Menu screen
   if (phase === "menu") {
@@ -160,16 +210,18 @@ export default function OnlinePage() {
   if (phase === "join") {
     return (
       <JoinRoomScreen
-        onBack={() => setPhase("menu")}
+        onBack={() => { setPhase("menu"); setInitialJoinCode(null); }}
         onJoined={(id, roomState) => {
           setRoom(roomState);
           setPlayerId(id);
           setPhase("lobby");
+          setInitialJoinCode(null);
         }}
         error={error}
         setError={setError}
         loading={loading}
         setLoading={setLoading}
+        initialCode={initialJoinCode}
       />
     );
   }
@@ -229,12 +281,6 @@ interface CreateRoomScreenProps {
 
 function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoading }: CreateRoomScreenProps) {
   const [name, setName] = useState("");
-  const [discussionTime, setDiscussionTime] = useState(180);
-  const [noTimer, setNoTimer] = useState(false);
-  const [imposterCount, setImposterCount] = useState(1);
-  const [trollChance, setTrollChance] = useState(0);
-  const [selectCurrentStars, setSelectCurrentStars] = useState(true);
-  const [selectLegends, setSelectLegends] = useState(true);
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -246,14 +292,15 @@ function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoad
     setError(null);
 
     try {
+      // Create with default settings - admin can adjust in lobby
       const settings: RoomSettings = {
-        discussionTime: noTimer ? 0 : discussionTime,
-        imposterCount,
-        imposterLessLikelyToStart: false,
-        trollChance,
+        discussionTime: 180, // 3 minutes default
+        imposterCount: 1,
+        imposterLessLikelyToStart: true,
+        trollChance: 0,
         sourceSelection: {
-          currentStars: selectCurrentStars,
-          legends: selectLegends,
+          currentStars: true,
+          legends: true,
           clubs: [],
         },
       };
@@ -283,8 +330,11 @@ function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoad
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6 animate-fade-in">
         <div className="text-center space-y-2">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center mb-4">
+            <span className="text-4xl">🏠</span>
+          </div>
           <h1 className="text-2xl font-bold text-purple-400">Create Room</h1>
-          <p className="text-zinc-400">Set up your game</p>
+          <p className="text-zinc-400">Enter your name to create a room</p>
         </div>
 
         {error && (
@@ -300,77 +350,17 @@ function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoad
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !loading && name.trim() && handleCreate()}
               placeholder="Enter your name"
-              className="w-full px-4 py-3 bg-zinc-800 border-2 border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
+              className="w-full px-4 py-4 bg-zinc-800 border-2 border-zinc-700 rounded-xl text-white text-lg placeholder-zinc-500 focus:border-purple-500 focus:outline-none"
               maxLength={20}
+              autoFocus
             />
           </div>
 
-          <div>
-            <label className="block text-zinc-400 text-sm mb-2">Discussion Time</label>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setNoTimer(true)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  noTimer ? "bg-purple-500 text-white" : "bg-zinc-800 text-zinc-400"
-                }`}
-              >
-                ∞ None
-              </button>
-              {[60, 120, 180, 300].map(time => (
-                <button
-                  key={time}
-                  onClick={() => { setNoTimer(false); setDiscussionTime(time); }}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    !noTimer && discussionTime === time ? "bg-purple-500 text-white" : "bg-zinc-800 text-zinc-400"
-                  }`}
-                >
-                  {time / 60}m
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-zinc-400 text-sm mb-2">Imposters</label>
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={() => setImposterCount(Math.max(1, imposterCount - 1))}
-                className="w-10 h-10 rounded-full bg-zinc-800 text-white font-bold hover:bg-zinc-700"
-              >
-                -
-              </button>
-              <span className="text-2xl font-bold text-white w-8 text-center">{imposterCount}</span>
-              <button
-                onClick={() => setImposterCount(Math.min(4, imposterCount + 1))}
-                className="w-10 h-10 rounded-full bg-zinc-800 text-white font-bold hover:bg-zinc-700"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-zinc-400 text-sm mb-2">Player Sources</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSelectCurrentStars(!selectCurrentStars)}
-                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                  selectCurrentStars ? "bg-purple-500/30 border-2 border-purple-500" : "bg-zinc-800 border-2 border-zinc-700"
-                }`}
-              >
-                ⭐ Stars
-              </button>
-              <button
-                onClick={() => setSelectLegends(!selectLegends)}
-                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                  selectLegends ? "bg-purple-500/30 border-2 border-purple-500" : "bg-zinc-800 border-2 border-zinc-700"
-                }`}
-              >
-                👑 Legends
-              </button>
-            </div>
-          </div>
+          <p className="text-zinc-500 text-sm text-center">
+            You can configure game settings after players join
+          </p>
         </div>
 
         <div className="flex gap-3">
@@ -385,7 +375,7 @@ function CreateRoomScreen({ onBack, onCreated, error, setError, loading, setLoad
             disabled={loading || !name.trim()}
             className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-400 hover:to-indigo-500 transition-all disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Room"}
+            {loading ? "Creating..." : "Create →"}
           </button>
         </div>
       </div>
@@ -403,10 +393,11 @@ interface JoinRoomScreenProps {
   setError: (error: string | null) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  initialCode?: string | null;
 }
 
-function JoinRoomScreen({ onBack, onJoined, error, setError, loading, setLoading }: JoinRoomScreenProps) {
-  const [code, setCode] = useState("");
+function JoinRoomScreen({ onBack, onJoined, error, setError, loading, setLoading, initialCode }: JoinRoomScreenProps) {
+  const [code, setCode] = useState(initialCode || "");
   const [name, setName] = useState("");
 
   const handleJoin = async () => {
@@ -519,8 +510,53 @@ interface LobbyScreenProps {
 }
 
 function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave, error, setError }: LobbyScreenProps) {
-  const [loading, setLoading] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [loadingStart, setLoadingStart] = useState(false);
+  const [kickingPlayer, setKickingPlayer] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(isAdmin); // Show settings by default for admin
+  const [copied, setCopied] = useState(false);
+  const [showSourcePopup, setShowSourcePopup] = useState(false);
+
+  const copyRoomCode = async () => {
+    try {
+      await navigator.clipboard.writeText(room.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = room.code;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const shareRoom = async () => {
+    const shareUrl = `${window.location.origin}/online?join=${room.code}`;
+    const shareData = {
+      title: "Join my Football Imposter game!",
+      text: `Join my game! Room code: ${room.code}`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy link to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      // User cancelled or error - silently ignore
+      console.log("Share cancelled or failed:", err);
+    }
+  };
   
   // Local settings state (for admin to edit)
   const [discussionTime, setDiscussionTime] = useState(room.settings.discussionTime);
@@ -530,6 +566,17 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
   const [imposterLessLikely, setImposterLessLikely] = useState(room.settings.imposterLessLikelyToStart);
   const [selectCurrentStars, setSelectCurrentStars] = useState(room.settings.sourceSelection.currentStars);
   const [selectLegends, setSelectLegends] = useState(room.settings.sourceSelection.legends);
+  const [selectedClubs, setSelectedClubs] = useState<string[]>(room.settings.sourceSelection.clubs || []);
+
+  const toggleClub = (clubId: string) => {
+    setSelectedClubs(prev => 
+      prev.includes(clubId) 
+        ? prev.filter(c => c !== clubId)
+        : [...prev, clubId]
+    );
+  };
+
+  const hasAnySourceSelected = selectCurrentStars || selectLegends || selectedClubs.length > 0;
 
   // Sync local state when room settings change (from polling)
   useEffect(() => {
@@ -548,7 +595,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
   const maxImposters = Math.max(1, room.players.length - 2);
 
   const handleUpdateSettings = async () => {
-    setLoading(true);
+    setSavingSettings(true);
     setError(null);
 
     try {
@@ -566,7 +613,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
             sourceSelection: {
               currentStars: selectCurrentStars,
               legends: selectLegends,
-              clubs: room.settings.sourceSelection.clubs,
+              clubs: selectedClubs,
             },
           },
         }),
@@ -584,7 +631,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
     } catch (err) {
       setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setSavingSettings(false);
     }
   };
 
@@ -594,7 +641,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
       return;
     }
 
-    setLoading(true);
+    setLoadingStart(true);
     setError(null);
 
     try {
@@ -615,7 +662,7 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
     } catch (err) {
       setError("Network error. Please try again.");
     } finally {
-      setLoading(false);
+      setLoadingStart(false);
     }
   };
 
@@ -630,19 +677,70 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
     onLeave();
   };
 
+  const handleKick = async (targetPlayerId: string) => {
+    if (!isAdmin) return;
+    
+    setKickingPlayer(targetPlayerId);
+    setError(null);
+
+    try {
+      const res = await fetch(
+        `/api/room/${room.code}?playerId=${targetPlayerId}&adminId=${playerId}`,
+        { method: "DELETE" }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to kick player");
+        return;
+      }
+
+      // Room will update via WebSocket
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setKickingPlayer(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 overflow-y-auto">
       <div className="w-full max-w-md space-y-6 animate-fade-in py-4">
         <div className="text-center space-y-4">
-          <div className="inline-block px-6 py-3 bg-purple-500/20 rounded-2xl border-2 border-purple-500 relative">
+          <button
+            onClick={copyRoomCode}
+            className="inline-block px-6 py-3 bg-purple-500/20 rounded-2xl border-2 border-purple-500 relative hover:bg-purple-500/30 transition-all cursor-pointer group"
+            title="Click to copy"
+          >
             <p className="text-zinc-400 text-sm">Room Code</p>
-            <p className="text-4xl font-mono font-bold text-purple-400 tracking-widest">{room.code}</p>
+            <p className="text-4xl font-mono font-bold text-purple-400 tracking-widest group-hover:text-purple-300 transition-colors">
+              {room.code}
+            </p>
+            {/* Copy indicator */}
+            <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-white text-xs rounded-full transition-all ${
+              copied ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+            }`}>
+              Copied!
+            </div>
             {/* Connection indicator */}
             <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
               connected ? "bg-green-500 animate-pulse" : "bg-yellow-500"
             }`} title={connected ? "Connected" : "Connecting..."} />
-          </div>
-          <p className="text-zinc-400">Share this code with friends!</p>
+          </button>
+          <p className="text-zinc-400">
+            {copied ? "✅ Copied to clipboard!" : "Tap code to copy • Share with friends!"}
+          </p>
+          
+          {/* Share button */}
+          <button
+            onClick={shareRoom}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition-all cursor-pointer"
+          >
+            <span>📤</span>
+            <span>Share Invite Link</span>
+          </button>
+          
           <p className="text-xs text-zinc-600">
             {connected ? "🟢 Live updates" : "🟡 Connecting..."}
           </p>
@@ -674,30 +772,54 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
                     <span className="text-xs text-purple-400">(You)</span>
                   )}
                 </div>
-                {player.isAdmin && (
-                  <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-1 rounded">Admin</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {player.isAdmin && (
+                    <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-1 rounded">Admin</span>
+                  )}
+                  {/* Kick button - only visible to admin for non-admin players */}
+                  {isAdmin && !player.isAdmin && player.id !== playerId && (
+                    <button
+                      onClick={() => handleKick(player.id)}
+                      disabled={kickingPlayer === player.id}
+                      className="w-7 h-7 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 transition-all flex items-center justify-center text-sm disabled:opacity-50 cursor-pointer"
+                      title={`Kick ${player.name}`}
+                    >
+                      {kickingPlayer === player.id ? "..." : "✕"}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Current Settings Display (for non-admins) or Settings Toggle */}
-        <div className="space-y-2">
-          <button
-            onClick={() => isAdmin && setShowSettings(!showSettings)}
-            className={`w-full flex items-center justify-between p-3 bg-zinc-800/50 rounded-xl border border-zinc-700 ${
-              isAdmin ? "hover:bg-zinc-800 cursor-pointer" : "cursor-default"
+        {/* Game Settings Box */}
+        <div className="bg-zinc-800/50 rounded-xl border border-zinc-700 overflow-hidden">
+          {/* Header */}
+          <div
+            onClick={() => isAdmin && !showSettings && setShowSettings(true)}
+            className={`flex items-center justify-between p-3 border-b border-zinc-700 ${
+              isAdmin && !showSettings ? "hover:bg-zinc-800/50 cursor-pointer" : "cursor-default"
             }`}
           >
             <span className="text-zinc-400 text-sm">⚙️ Game Settings</span>
             {isAdmin && (
-              <span className="text-zinc-500 text-xs">{showSettings ? "▲ Hide" : "▼ Edit"}</span>
+              showSettings ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowSettings(false); }}
+                  className="text-zinc-500 hover:text-zinc-300 text-sm px-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              ) : (
+                <span className="text-purple-400 text-xs font-medium">✎ Edit</span>
+              )
             )}
-          </button>
+          </div>
 
-          {/* Settings Summary (always visible) */}
-          {!showSettings && (
+          {/* Content: Summary or Edit Form */}
+          {!showSettings ? (
+            /* Settings Summary */
             <div className="px-3 py-2 text-xs text-zinc-500 space-y-1">
               <div className="flex justify-between">
                 <span>Discussion:</span>
@@ -714,18 +836,27 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
               <div className="flex justify-between">
                 <span>Sources:</span>
                 <span className="text-zinc-400">
-                  {[
-                    room.settings.sourceSelection.currentStars && "Stars",
-                    room.settings.sourceSelection.legends && "Legends",
-                  ].filter(Boolean).join(", ") || "None"}
+                  {(() => {
+                    const parts: string[] = [];
+                    if (room.settings.sourceSelection.currentStars) parts.push("Stars");
+                    if (room.settings.sourceSelection.legends) parts.push("Legends");
+                    const clubIds = room.settings.sourceSelection.clubs || [];
+                    if (clubIds.length > 0) {
+                      if (clubIds.length < 3) {
+                        const clubNames = clubIds.map(id => CLUBS.find(c => c.id === id)?.shortName || id);
+                        parts.push(...clubNames);
+                      } else {
+                        parts.push(`${clubIds.length} clubs`);
+                      }
+                    }
+                    return parts.join(", ") || "None";
+                  })()}
                 </span>
               </div>
             </div>
-          )}
-
-          {/* Expanded Settings (admin only) */}
-          {showSettings && isAdmin && (
-            <div className="space-y-4 p-4 bg-zinc-800/30 rounded-xl border border-zinc-700 animate-fade-in">
+          ) : isAdmin ? (
+            /* Edit Form (admin only) */
+            <div className="space-y-4 p-4 animate-fade-in">
               {/* Discussion Time */}
               <div className="space-y-2">
                 <label className="block text-zinc-400 text-sm">Discussion Time</label>
@@ -772,20 +903,46 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
                 </div>
               </div>
 
-              {/* Troll Chance */}
-              <div className="space-y-2">
-                <label className="block text-zinc-400 text-sm">
-                  🎲 Troll Chance: <span className="text-purple-400">{trollChance}%</span>
-                </label>
+              {/* Troll Mode Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-zinc-200 font-medium text-sm">🎲 Troll Mode</p>
+                    <p className="text-zinc-500 text-xs">Chance of chaotic twist each round</p>
+                  </div>
+                  <span className={`text-lg font-bold tabular-nums ${trollChance > 0 ? "text-purple-400" : "text-zinc-500"}`}>
+                    {trollChance}%
+                  </span>
+                </div>
                 <input
                   type="range"
                   min="0"
                   max="100"
+                  step="5"
                   value={trollChance}
                   onChange={(e) => setTrollChance(parseInt(e.target.value))}
-                  className="w-full accent-purple-500"
+                  className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  style={{
+                    background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${trollChance}%, rgb(63, 63, 70) ${trollChance}%, rgb(63, 63, 70) 100%)`
+                  }}
                 />
+                <div className="flex justify-between text-xs text-zinc-500">
+                  <span>Off</span>
+                  <span>Chaos</span>
+                </div>
               </div>
+
+              {trollChance > 0 && (
+                <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/30 text-xs text-purple-300 space-y-1">
+                  <p className="font-medium">Possible twists:</p>
+                  <ul className="space-y-0.5 text-purple-400">
+                    <li>• +1 extra imposter</li>
+                    <li>• Everyone is an imposter</li>
+                    <li>• No imposters at all</li>
+                    <li>• Each player gets a different footballer</li>
+                  </ul>
+                </div>
+              )}
 
               {/* Imposter Less Likely */}
               <div className="flex items-center justify-between">
@@ -805,53 +962,62 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
               {/* Player Sources */}
               <div className="space-y-2">
                 <label className="block text-zinc-400 text-sm">Player Sources</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectCurrentStars(!selectCurrentStars)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                      selectCurrentStars ? "bg-purple-500/30 border-2 border-purple-500 text-white" : "bg-zinc-800 border-2 border-zinc-700 text-zinc-400"
-                    }`}
-                  >
-                    ⭐ Stars
-                  </button>
-                  <button
-                    onClick={() => setSelectLegends(!selectLegends)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                      selectLegends ? "bg-purple-500/30 border-2 border-purple-500 text-white" : "bg-zinc-800 border-2 border-zinc-700 text-zinc-400"
-                    }`}
-                  >
-                    👑 Legends
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowSourcePopup(true)}
+                  className="w-full py-3 px-4 bg-zinc-800 border-2 border-zinc-700 rounded-xl text-left hover:border-zinc-600 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-zinc-200 text-sm">
+                      {(() => {
+                        const parts: string[] = [];
+                        if (selectCurrentStars) parts.push("🔥 Stars");
+                        if (selectLegends) parts.push("👑 Legends");
+                        if (selectedClubs.length > 0) {
+                          if (selectedClubs.length < 3) {
+                            const clubNames = selectedClubs.map(id => CLUBS.find(c => c.id === id)?.shortName || id);
+                            parts.push(`⚽ ${clubNames.join(", ")}`);
+                          } else {
+                            parts.push(`⚽ ${selectedClubs.length} clubs`);
+                          }
+                        }
+                        if (parts.length === 0) {
+                          return <span className="text-amber-400">⚠️ Select sources</span>;
+                        }
+                        return parts.join(" + ");
+                      })()}
+                    </div>
+                    <span className="text-zinc-500">▶</span>
+                  </div>
+                </button>
               </div>
 
-              {/* Save Settings Button */}
+              {/* Done Button */}
               <button
                 onClick={handleUpdateSettings}
-                disabled={loading}
-                className="w-full py-3 bg-purple-500/30 border border-purple-500 text-purple-300 font-medium rounded-xl hover:bg-purple-500/40 transition-all disabled:opacity-50"
+                disabled={savingSettings}
+                className="w-full py-3 bg-purple-500 text-white font-medium rounded-xl hover:bg-purple-400 transition-all disabled:opacity-50 cursor-pointer"
               >
-                {loading ? "Saving..." : "💾 Save Settings"}
+                {savingSettings ? "Saving..." : "Done"}
               </button>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
             onClick={handleLeave}
-            className="flex-1 py-4 bg-zinc-800 text-zinc-300 font-bold rounded-xl hover:bg-zinc-700 transition-all"
+            className="flex-1 py-4 bg-zinc-800 text-zinc-300 font-bold rounded-xl hover:bg-zinc-700 transition-all cursor-pointer"
           >
             Leave
           </button>
           {isAdmin && (
             <button
               onClick={handleStart}
-              disabled={loading || room.players.length < 3}
-              className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-400 hover:to-indigo-500 transition-all disabled:opacity-50"
+              disabled={loadingStart || room.players.length < 3}
+              className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-400 hover:to-indigo-500 transition-all disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Starting..." : "Start Game"}
+              {loadingStart ? "Starting..." : "Start Game"}
             </button>
           )}
         </div>
@@ -862,6 +1028,138 @@ function LobbyScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave
           </p>
         )}
       </div>
+
+      {/* Player Source Selection Popup */}
+      {showSourcePopup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-700 w-full max-w-md max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div className="sticky top-0 bg-zinc-900 p-4 border-b border-zinc-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-purple-400">Choose Player Sources</h2>
+              <button
+                onClick={() => setShowSourcePopup(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-6">
+              {/* Premade Lists Section */}
+              <div className="space-y-3">
+                <h3 className="text-zinc-500 text-sm font-medium uppercase tracking-wide">Premade Lists</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Current Stars */}
+                  <button
+                    onClick={() => setSelectCurrentStars(!selectCurrentStars)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                      selectCurrentStars
+                        ? "border-orange-500 bg-orange-500/10"
+                        : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">🔥</div>
+                    <div className="font-bold text-white text-sm">Current Stars</div>
+                    <div className="text-zinc-400 text-xs">Today&apos;s best</div>
+                  </button>
+
+                  {/* Legends */}
+                  <button
+                    onClick={() => setSelectLegends(!selectLegends)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left cursor-pointer ${
+                      selectLegends
+                        ? "border-yellow-500 bg-yellow-500/10"
+                        : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600"
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">👑</div>
+                    <div className="font-bold text-white text-sm">Legends</div>
+                    <div className="text-zinc-400 text-xs">All-time greats</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Clubs Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-zinc-500 text-sm font-medium uppercase tracking-wide">Live Club Data</h3>
+                  <button
+                    onClick={() => {
+                      if (selectedClubs.length === CLUBS.length) {
+                        setSelectedClubs([]);
+                      } else {
+                        setSelectedClubs(CLUBS.map(c => c.id));
+                      }
+                    }}
+                    className="text-xs text-purple-400 hover:text-purple-300 cursor-pointer"
+                  >
+                    {selectedClubs.length === CLUBS.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-1">
+                  {CLUBS.map((club) => (
+                    <button
+                      key={club.id}
+                      onClick={() => toggleClub(club.id)}
+                      className={`p-2 rounded-lg transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                        selectedClubs.includes(club.id)
+                          ? "bg-purple-500/20 border-2 border-purple-500/50 scale-105"
+                          : "bg-zinc-800 border-2 border-zinc-700 hover:border-zinc-600 hover:bg-zinc-700/50"
+                      }`}
+                    >
+                      <div className="w-10 h-10 relative">
+                        <Image
+                          src={club.badge}
+                          alt={club.name}
+                          fill
+                          className="object-contain"
+                          sizes="40px"
+                        />
+                      </div>
+                      <div className={`text-xs font-medium truncate w-full text-center ${
+                        selectedClubs.includes(club.id) ? "text-purple-400" : "text-zinc-400"
+                      }`}>
+                        {club.shortName}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Warning if nothing selected */}
+              {!hasAnySourceSelected && (
+                <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/30 text-xs text-amber-400 text-center">
+                  Please select at least one source
+                </div>
+              )}
+
+              {/* Selected count */}
+              <div className="text-center text-sm text-zinc-500">
+                {selectCurrentStars && selectLegends && selectedClubs.length === 0 && "All Stars selected (60 players)"}
+                {selectCurrentStars && !selectLegends && selectedClubs.length === 0 && "Current Stars only (30 players)"}
+                {!selectCurrentStars && selectLegends && selectedClubs.length === 0 && "Legends only (30 players)"}
+                {selectedClubs.length > 0 && (
+                  <>
+                    {selectedClubs.length} club{selectedClubs.length > 1 ? "s" : ""} selected
+                    {(selectCurrentStars || selectLegends) && " + "}
+                    {selectCurrentStars && selectLegends && "All Stars"}
+                    {selectCurrentStars && !selectLegends && "Current Stars"}
+                    {!selectCurrentStars && selectLegends && "Legends"}
+                  </>
+                )}
+              </div>
+
+              {/* Done Button */}
+              <button
+                onClick={() => setShowSourcePopup(false)}
+                disabled={!hasAnySourceSelected}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-lg rounded-xl hover:from-purple-400 hover:to-indigo-500 transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Done ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -880,7 +1178,42 @@ interface GameScreenProps {
 
 function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave }: GameScreenProps) {
   const [loading, setLoading] = useState(false);
+  const [roleHidden, setRoleHidden] = useState(false);
+  const [showRole, setShowRole] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const currentPlayer = room.players.find(p => p.id === playerId);
+
+  // Client-side timer for discussion phase
+  useEffect(() => {
+    if (room.phase !== "discussion" || !room.discussionEndTime) {
+      setTimeLeft(null);
+      return;
+    }
+
+    // Calculate initial time left
+    const calculateTimeLeft = () => {
+      const remaining = Math.max(0, Math.floor((room.discussionEndTime! - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      return remaining;
+    };
+
+    calculateTimeLeft();
+
+    // Update every second
+    const interval = setInterval(() => {
+      const remaining = calculateTimeLeft();
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [room.phase, room.discussionEndTime]);
+
+  // Reset showRole when phase changes
+  useEffect(() => {
+    setShowRole(false);
+  }, [room.phase]);
 
   const performAction = async (action: string, extra?: object) => {
     setLoading(true);
@@ -930,13 +1263,24 @@ function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave 
       );
     }
 
-    // Player has revealed - show their role
+    // Player has revealed - show their role (or hidden state)
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in ${
-        currentPlayer.isImposter ? "bg-gradient-to-b from-red-950/30 to-transparent" : "bg-gradient-to-b from-emerald-950/30 to-transparent"
+        roleHidden ? "" : (currentPlayer.isImposter ? "bg-gradient-to-b from-red-950/30 to-transparent" : "bg-gradient-to-b from-emerald-950/30 to-transparent")
       }`}>
         <div className="w-full max-w-md text-center space-y-6">
-          {currentPlayer.isImposter ? (
+          {roleHidden ? (
+            /* Hidden state */
+            <>
+              <div className="w-32 h-32 mx-auto rounded-full bg-zinc-800 border-4 border-zinc-700 flex items-center justify-center">
+                <span className="text-6xl">🙈</span>
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-zinc-400">Role Hidden</h1>
+                <p className="text-zinc-500 text-sm">Tap below to show your role again</p>
+              </div>
+            </>
+          ) : currentPlayer.isImposter ? (
             <>
               <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-red-600 to-red-800 border-4 border-red-500 flex items-center justify-center shadow-2xl shadow-red-500/50">
                 <span className="text-6xl">🕵️</span>
@@ -970,6 +1314,14 @@ function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave 
             </>
           )}
 
+          {/* Hide/Show toggle button */}
+          <button
+            onClick={() => setRoleHidden(!roleHidden)}
+            className="px-4 py-2 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-zinc-700 hover:text-zinc-300 transition-all text-sm cursor-pointer"
+          >
+            {roleHidden ? "👁️ Show Role" : "🙈 Hide Role"}
+          </button>
+
           <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
             <p className="text-zinc-400 text-sm">
               Waiting for everyone to reveal... ({room.players.filter(p => p.hasRevealed).length}/{room.players.length})
@@ -980,7 +1332,7 @@ function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave 
             <button
               onClick={() => performAction("discussion")}
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl"
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl cursor-pointer"
             >
               Start Discussion →
             </button>
@@ -993,17 +1345,56 @@ function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave 
   // Discussion phase
   if (room.phase === "discussion") {
     const startingPlayer = room.players.find(p => p.id === room.startingPlayerId);
-    const timeLeft = room.discussionEndTime ? Math.max(0, Math.floor((room.discussionEndTime - Date.now()) / 1000)) : null;
+    const displayPlayer = currentPlayer?.secretPlayer || room.secretPlayer;
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in">
         <div className="w-full max-w-md text-center space-y-6">
           <h1 className="text-3xl font-bold text-white">Discussion Time!</h1>
           
-          {timeLeft !== null && (
-            <div className="text-5xl font-mono font-bold text-purple-400">
+          {/* Client-side timer */}
+          {timeLeft !== null && timeLeft > 0 ? (
+            <div className={`text-5xl font-mono font-bold ${timeLeft <= 30 ? "text-red-400 animate-pulse" : "text-purple-400"}`}>
               {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
             </div>
+          ) : room.discussionEndTime ? (
+            <div className="text-2xl font-bold text-amber-400">⏰ Time&apos;s up!</div>
+          ) : (
+            <div className="text-2xl font-bold text-zinc-500">∞ No timer</div>
+          )}
+
+          {/* Show/Hide Role Toggle */}
+          {showRole ? (
+            <div className={`p-4 rounded-xl border ${
+              currentPlayer?.isImposter 
+                ? "bg-red-500/10 border-red-500/50" 
+                : "bg-emerald-500/10 border-emerald-500/50"
+            }`}>
+              {currentPlayer?.isImposter ? (
+                <div className="space-y-1">
+                  <p className="text-red-400 font-bold text-lg">🕵️ IMPOSTER</p>
+                  <p className="text-red-300 text-sm">Blend in! Don&apos;t get caught!</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-emerald-400 font-bold text-lg">⚽ {displayPlayer?.name}</p>
+                  <p className="text-emerald-300 text-sm">{displayPlayer?.position} • {displayPlayer?.team}</p>
+                </div>
+              )}
+              <button
+                onClick={() => setShowRole(false)}
+                className="mt-3 px-4 py-1.5 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-zinc-700 text-sm cursor-pointer"
+              >
+                🙈 Hide
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowRole(true)}
+              className="px-4 py-2 bg-zinc-800/50 border border-zinc-700 text-zinc-400 rounded-xl hover:bg-zinc-800 hover:text-zinc-300 transition-all text-sm cursor-pointer"
+            >
+              👁️ Show My Role
+            </button>
           )}
 
           <div className="p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
@@ -1033,7 +1424,7 @@ function GameScreen({ room, playerId, isAdmin, connected, onRoomUpdate, onLeave 
             <button
               onClick={() => performAction("results")}
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl"
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl cursor-pointer"
             >
               Skip to Results →
             </button>

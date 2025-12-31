@@ -200,7 +200,11 @@ export async function DELETE(request: Request, context: RouteContext) {
     // If admin left, assign new admin or delete room
     if (player.isAdmin) {
       if (room.players.length > 0) {
-        room.players[0].isAdmin = true;
+        // Find the oldest player (by joinedAt) to become admin
+        const oldestPlayer = room.players.reduce((oldest: RoomPlayer, p: RoomPlayer) => 
+          (p.joinedAt || 0) < (oldest.joinedAt || 0) ? p : oldest
+        , room.players[0]);
+        oldestPlayer.isAdmin = true;
       } else {
         // Delete room
         await redis.del(`room:${roomCode}`);
@@ -211,11 +215,12 @@ export async function DELETE(request: Request, context: RouteContext) {
     room.updatedAt = Date.now();
     await redis.set(`room:${roomCode}`, JSON.stringify(room), { ex: ROOM_TTL });
 
-    // Broadcast to room via Pusher (notification only, no sensitive data)
+    // Broadcast to room via Pusher (include kicked player ID so they know to leave)
     try {
       const pusher = getPusherServer();
       await pusher.trigger(getRoomChannel(roomCode), ROOM_EVENTS.PLAYER_LEFT, { 
         event: "player_left",
+        kickedPlayerId: playerId, // The player who was removed
         updatedAt: room.updatedAt,
       });
     } catch (pusherError) {
