@@ -7,7 +7,7 @@ import { Redis } from "@upstash/redis";
 const inMemoryStore = new Map<string, { count: number; resetTime: number }>();
 
 // Rate limit configuration
-const RATE_LIMIT_REQUESTS = 30; // requests
+const RATE_LIMIT_REQUESTS = 300; // requests
 const RATE_LIMIT_WINDOW = 60; // seconds
 
 // Create Upstash rate limiter if configured

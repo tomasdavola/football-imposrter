@@ -71,12 +71,20 @@ export default function Home() {
             href="/game"
             className="block w-full py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-black font-bold text-xl rounded-2xl hover:from-emerald-400 hover:to-green-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-emerald-500/25"
           >
-            🎮 Start Game
+            📱 Pass-the-Phone
           </Link>
           
-          <p className="text-zinc-600 text-sm">
-            Pass-the-phone mode • 3-10 players
-          </p>
+          <Link
+            href="/online"
+            className="block w-full py-5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-xl rounded-2xl hover:from-purple-400 hover:to-indigo-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-purple-500/25"
+          >
+            🌐 Online Mode
+          </Link>
+          
+          <div className="text-zinc-600 text-sm space-y-1">
+            <p>📱 Pass-the-phone • Share one device</p>
+            <p>🌐 Online • Everyone on their own device</p>
+          </div>
         </div>
 
         {/* How to play hint */}
